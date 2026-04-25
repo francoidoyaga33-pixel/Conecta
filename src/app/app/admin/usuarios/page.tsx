@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { TopBar } from "../../_components/TopBar"
 import {
   Plus, Search, UserCheck, UserX,
-  Pencil, Trash2, X, Loader2, Shield, BookOpen,
+  Trash2, X, Loader2, Shield, BookOpen,
   GraduationCap, Users, DollarSign
 } from "lucide-react"
+import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario } from "./actions"
 
 type Role = "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
 
@@ -20,9 +21,6 @@ interface ConectaUser {
   created_at: string
 }
 
-// TODO: reemplazar con datos reales de conecta_profiles
-const MOCK_USERS: ConectaUser[] = []
-
 const ROLE_CONFIG: Record<Role, { label: string; icon: React.ElementType; color: string }> = {
   admin:       { label: "Administrador",   icon: Shield,        color: "bg-violet-100 text-violet-700" },
   docente:     { label: "Docente",         icon: BookOpen,      color: "bg-blue-100 text-blue-700" },
@@ -32,51 +30,52 @@ const ROLE_CONFIG: Record<Role, { label: string; icon: React.ElementType; color:
 }
 
 export default function UsuariosPage() {
-  const [users, setUsers] = useState<ConectaUser[]>(MOCK_USERS)
+  const [users, setUsers] = useState<ConectaUser[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "todos">("todos")
   const [showModal, setShowModal] = useState(false)
-  const [editUser, setEditUser] = useState<ConectaUser | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  async function loadUsers() {
+    setLoading(true)
+    const { users } = await getUsuarios()
+    setUsers(users as ConectaUser[])
+    setLoading(false)
+  }
+
+  useEffect(() => { loadUsers() }, [])
 
   const filtered = users.filter((u) => {
     const matchSearch = `${u.nombre} ${u.apellido} ${u.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
+      .toLowerCase().includes(search.toLowerCase())
     const matchRole = roleFilter === "todos" || u.role === roleFilter
     return matchSearch && matchRole
   })
 
-  function handleToggleActive(userId: string) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, activo: !u.activo } : u))
-    )
-    // TODO: update en conecta_profiles
+  function handleToggleActive(userId: string, activo: boolean) {
+    startTransition(async () => {
+      await toggleUsuarioActivo(userId, !activo)
+      await loadUsers()
+    })
   }
 
   function handleDelete(userId: string) {
-    if (!confirm("¿Eliminar este usuario?")) return
-    setUsers((prev) => prev.filter((u) => u.id !== userId))
-    // TODO: delete en conecta_profiles + auth.users
+    if (!confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return
+    startTransition(async () => {
+      await deleteUsuario(userId)
+      await loadUsers()
+    })
   }
 
-  function handleSave(user: Omit<ConectaUser, "id" | "created_at" | "activo">) {
-    if (editUser) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === editUser.id ? { ...u, ...user } : u))
-      )
-      // TODO: update conecta_profiles
-    } else {
-      const newUser: ConectaUser = {
-        ...user,
-        id: crypto.randomUUID(),
-        activo: true,
-        created_at: new Date().toISOString(),
-      }
-      setUsers((prev) => [newUser, ...prev])
-      // TODO: crear en Supabase auth + insertar en conecta_profiles
+  async function handleSave(data: { nombre: string; apellido: string; email: string; role: string; password: string }) {
+    const result = await createUsuario(data)
+    if (result.error) {
+      alert("Error: " + result.error)
+      return
     }
     setShowModal(false)
-    setEditUser(null)
+    await loadUsers()
   }
 
   return (
@@ -84,10 +83,8 @@ export default function UsuariosPage() {
       <TopBar title="Gestión de Usuarios" subtitle="Administrá los usuarios del sistema" />
 
       <main className="flex-1 p-6 space-y-4">
-        {/* Actions bar */}
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-2 flex-1 min-w-0">
-            {/* Search */}
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
@@ -98,8 +95,6 @@ export default function UsuariosPage() {
                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
               />
             </div>
-
-            {/* Role filter */}
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as Role | "todos")}
@@ -113,7 +108,7 @@ export default function UsuariosPage() {
           </div>
 
           <button
-            onClick={() => { setEditUser(null); setShowModal(true) }}
+            onClick={() => setShowModal(true)}
             className="flex items-center gap-2 rounded-lg bg-[#2B7A9E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#246a8a] transition-colors"
           >
             <Plus className="h-4 w-4" />
@@ -121,22 +116,23 @@ export default function UsuariosPage() {
           </button>
         </div>
 
-        {/* Table */}
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-[#2B7A9E]" />
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="h-10 w-10 text-gray-200 mb-3" />
               <p className="text-sm font-medium text-[#3D3D3D]">
                 {users.length === 0 ? "Aún no hay usuarios en el sistema" : "Sin resultados"}
               </p>
               <p className="text-xs text-[#aaa] mt-1">
-                {users.length === 0
-                  ? "Creá el primer usuario con el botón de arriba"
-                  : "Probá con otro filtro o término de búsqueda"}
+                {users.length === 0 ? "Creá el primer usuario con el botón de arriba" : "Probá con otro filtro"}
               </p>
               {users.length === 0 && (
                 <button
-                  onClick={() => { setEditUser(null); setShowModal(true) }}
+                  onClick={() => setShowModal(true)}
                   className="mt-4 flex items-center gap-1.5 rounded-lg bg-[#2B7A9E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#246a8a] transition-colors"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -184,28 +180,25 @@ export default function UsuariosPage() {
                         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                           user.activo ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"
                         }`}>
-                          {user.activo ? <><UserCheck className="h-3 w-3" /> Activo</> : <><UserX className="h-3 w-3" /> Inactivo</>}
+                          {user.activo
+                            ? <><UserCheck className="h-3 w-3" /> Activo</>
+                            : <><UserX className="h-3 w-3" /> Inactivo</>}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end">
                           <button
-                            onClick={() => { setEditUser(user); setShowModal(true) }}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-[#2B7A9E] hover:bg-[#2B7A9E]/10 transition-colors"
-                            title="Editar"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleActive(user.id)}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            onClick={() => handleToggleActive(user.id, user.activo)}
+                            disabled={isPending}
+                            className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
                             title={user.activo ? "Desactivar" : "Activar"}
                           >
                             {user.activo ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-red-600 hover:bg-red-50 transition-colors"
+                            disabled={isPending}
+                            className="p-1.5 rounded-lg text-[#aaa] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
                             title="Eliminar"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -220,7 +213,6 @@ export default function UsuariosPage() {
           )}
         </div>
 
-        {/* Summary */}
         {users.length > 0 && (
           <p className="text-xs text-[#aaa]">
             {filtered.length} de {users.length} usuario{users.length !== 1 ? "s" : ""}
@@ -230,8 +222,7 @@ export default function UsuariosPage() {
 
       {showModal && (
         <UserModal
-          user={editUser}
-          onClose={() => { setShowModal(false); setEditUser(null) }}
+          onClose={() => setShowModal(false)}
           onSave={handleSave}
         />
       )}
@@ -239,24 +230,14 @@ export default function UsuariosPage() {
   )
 }
 
-// ─── Modal ─────────────────────────────────────────────────────────────────────
-
 function UserModal({
-  user,
   onClose,
   onSave,
 }: {
-  user: ConectaUser | null
   onClose: () => void
-  onSave: (data: Omit<ConectaUser, "id" | "created_at" | "activo">) => void
+  onSave: (data: { nombre: string; apellido: string; email: string; role: string; password: string }) => Promise<void>
 }) {
-  const [form, setForm] = useState({
-    nombre: user?.nombre ?? "",
-    apellido: user?.apellido ?? "",
-    email: user?.email ?? "",
-    role: user?.role ?? ("docente" as Role),
-    password: "",
-  })
+  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", role: "docente", password: "" })
   const [loading, setLoading] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -266,21 +247,15 @@ function UserModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    // Simulate async save; TODO: real Supabase call
-    await new Promise((r) => setTimeout(r, 600))
-    onSave({ nombre: form.nombre, apellido: form.apellido, email: form.email, role: form.role as Role })
+    await onSave(form)
     setLoading(false)
   }
-
-  const isEdit = !!user
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-[#3D3D3D]">
-            {isEdit ? "Editar usuario" : "Nuevo usuario"}
-          </h2>
+          <h2 className="text-base font-bold text-[#3D3D3D]">Nuevo usuario</h2>
           <button onClick={onClose} className="p-1 rounded-lg text-[#aaa] hover:text-[#3D3D3D]">
             <X className="h-4 w-4" />
           </button>
@@ -313,7 +288,7 @@ function UserModal({
               type="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="usuario@conecta.edu"
+              placeholder="usuario@ejemplo.com"
               required
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
             />
@@ -333,24 +308,20 @@ function UserModal({
             </select>
           </div>
 
-          {!isEdit && (
-            <div>
-              <label className="block text-xs font-semibold text-[#555] mb-1.5">
-                Contraseña temporal
-              </label>
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Mínimo 6 caracteres"
-                required={!isEdit}
-                minLength={6}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
-              />
-              <p className="text-xs text-[#aaa] mt-1">El usuario podrá cambiarla al ingresar.</p>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-semibold text-[#555] mb-1.5">Contraseña temporal</label>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Mínimo 6 caracteres"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+            />
+            <p className="text-xs text-[#aaa] mt-1">El usuario podrá cambiarla al ingresar.</p>
+          </div>
 
           <div className="flex gap-3 pt-1">
             <button
@@ -365,7 +336,7 @@ function UserModal({
               disabled={loading}
               className="flex-1 rounded-lg bg-[#2B7A9E] py-2.5 text-sm font-semibold text-white hover:bg-[#246a8a] transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
             >
-              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</> : isEdit ? "Guardar cambios" : "Crear usuario"}
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Creando...</> : "Crear usuario"}
             </button>
           </div>
         </form>
