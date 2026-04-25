@@ -15,11 +15,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("conecta_profiles")
-    .select("role, nombre, apellido")
+    .select("role, nombre, apellido, password_changed")
     .eq("id", user.id)
     .single()
 
   if (!profile) redirect("/login")
+
+  // Redirigir a cambiar contraseña si es el primer ingreso
+  if (!profile.password_changed) {
+    redirect("/cambiar-contrasena")
+  }
 
   const role = profile.role as "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
   const userName = `${profile.nombre} ${profile.apellido}`

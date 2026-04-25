@@ -26,8 +26,8 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Protect /app routes
-  if (pathname.startsWith("/app/")) {
+  // Protect /app and /cambiar-contrasena routes
+  if (pathname.startsWith("/app/") || pathname === "/cambiar-contrasena") {
     if (!user) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = "/login"
