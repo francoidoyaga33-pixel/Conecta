@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protect /app routes
-  if (pathname.startsWith("/app")) {
+  if (pathname.startsWith("/app/")) {
     if (!user) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = "/login"
