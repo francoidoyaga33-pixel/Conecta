@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, BookOpen, ClipboardList,
   Calendar, DollarSign, MessageSquare, BarChart2,
   LogOut, ChevronRight, GraduationCap, NotebookPen, Bell,
+  FolderOpen, UserSearch,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ConectaLogo } from "../../_components/ConectaLogo"
@@ -32,6 +33,18 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/admin/usuarios",
     icon: Users,
     roles: ["admin", "docente", "financiero"],
+  },
+  {
+    label: "Alumnos",
+    href: "/app/admin/alumnos",
+    icon: FolderOpen,
+    roles: ["admin", "financiero"],
+  },
+  {
+    label: "Interesados",
+    href: "/app/admin/interesados",
+    icon: UserSearch,
+    roles: ["admin", "financiero"],
   },
   {
     label: "Académico",
