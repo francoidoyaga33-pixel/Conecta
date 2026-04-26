@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard, Users, BookOpen, ClipboardList,
   Calendar, DollarSign, MessageSquare, BarChart2,
-  LogOut, ChevronRight, GraduationCap,
+  LogOut, ChevronRight, GraduationCap, NotebookPen,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ConectaLogo } from "../../_components/ConectaLogo"
@@ -44,6 +44,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Asistencia",
     href: "/app/asistencia",
     icon: ClipboardList,
+    roles: ["admin", "docente"],
+  },
+  {
+    label: "Bitácora",
+    href: "/app/bitacora",
+    icon: NotebookPen,
     roles: ["admin", "docente"],
   },
   {
