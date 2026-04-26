@@ -17,12 +17,21 @@ export async function getMyRole(): Promise<string> {
 }
 
 export async function getUsuarios() {
+  const myRole = await getMyRole()
   const admin = createAdminClient()
-  const { data, error } = await admin
+
+  let query = admin
     .from("conecta_profiles")
     .select("*")
     .order("created_at", { ascending: false })
 
+  if (myRole === "financiero") {
+    query = query.neq("role", "admin")
+  } else if (myRole === "docente") {
+    query = query.eq("role", "estudiante")
+  }
+
+  const { data, error } = await query
   if (error) return { users: [], error: error.message }
   return { users: data ?? [], error: null }
 }
