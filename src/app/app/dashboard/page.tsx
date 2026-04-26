@@ -1,6 +1,7 @@
 import { TopBar } from "../_components/TopBar"
 import { createClient } from "@/lib/supabase/server"
-import { Users, BookOpen, ClipboardList, TrendingUp, Calendar, Shield, GraduationCap, DollarSign } from "lucide-react"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { Users, BookOpen, ClipboardList, TrendingUp, Calendar, GraduationCap } from "lucide-react"
 import Link from "next/link"
 
 const ROLE_CONFIG: Record<string, { label: string; color: string }> = {
@@ -28,7 +29,8 @@ export default async function DashboardPage() {
   let stats = { estudiantes: 0, docentes: 0, total: 0 }
 
   if (isAdmin) {
-    const { data } = await supabase
+    const admin = createAdminClient()
+    const { data } = await admin
       .from("conecta_profiles")
       .select("id, nombre, apellido, email, role, activo")
       .order("created_at", { ascending: false })

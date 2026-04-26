@@ -5,8 +5,8 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
 export async function getUsuarios() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
+  const admin = createAdminClient()
+  const { data, error } = await admin
     .from("conecta_profiles")
     .select("*")
     .order("created_at", { ascending: false })
