@@ -86,9 +86,10 @@ const NAV_ITEMS: NavItem[] = [
 interface SidebarProps {
   role: Role
   userName: string
+  avatarUrl?: string | null
 }
 
-export function Sidebar({ role, userName }: SidebarProps) {
+export function Sidebar({ role, userName, avatarUrl }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -114,17 +115,18 @@ export function Sidebar({ role, userName }: SidebarProps) {
         <ConectaLogo size="sm" />
       </div>
 
-      <div className="px-5 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#2B7A9E]/30 flex items-center justify-center text-sm font-bold text-[#7EC8E3]">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{userName}</p>
-            <p className="text-xs text-[#7EC8E3]">{roleLabels[role]}</p>
-          </div>
+      <Link href="/app/perfil" className="px-5 py-4 border-b border-white/10 flex items-center gap-3 hover:bg-white/5 transition-colors group">
+        <div className="h-9 w-9 rounded-full bg-[#2B7A9E]/30 flex items-center justify-center text-sm font-bold text-[#7EC8E3] shrink-0 overflow-hidden">
+          {avatarUrl
+            ? <img src={avatarUrl} alt={userName} className="h-full w-full object-cover" />
+            : userName.charAt(0).toUpperCase()
+          }
         </div>
-      </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white truncate group-hover:text-[#7EC8E3] transition-colors">{userName}</p>
+          <p className="text-xs text-[#7EC8E3]">{roleLabels[role]}</p>
+        </div>
+      </Link>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {visibleItems.map((item) => {

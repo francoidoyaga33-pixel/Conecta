@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("conecta_profiles")
-    .select("role, nombre, apellido, password_changed")
+    .select("role, nombre, apellido, password_changed, avatar_url")
     .eq("id", user.id)
     .single()
 
@@ -30,10 +30,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const role = profile.role as "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
   const userName = `${profile.nombre} ${profile.apellido}`
+  const avatarUrl = profile.avatar_url ?? null
 
   return (
     <div className="flex h-screen bg-[#F5F7FA] overflow-hidden">
-      <Sidebar role={role} userName={userName} />
+      <Sidebar role={role} userName={userName} avatarUrl={avatarUrl} />
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {children}
       </div>
