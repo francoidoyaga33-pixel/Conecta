@@ -1,0 +1,112 @@
+"use server"
+
+import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+
+export async function getMyProfile() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data } = await supabase
+    .from("conecta_profiles")
+    .select("id, role, nombre, apellido")
+    .eq("id", user.id)
+    .single()
+  return data
+}
+
+export async function getGrupos() {
+  const profile = await getMyProfile()
+  if (!profile) return []
+
+  const admin = createAdminClient()
+  let query = admin
+    .from("conecta_grupos")
+    .select("id, nombre, nivel, docente_id")
+    .eq("activo", true)
+    .order("nombre")
+
+  // Docente solo ve sus grupos
+  if (profile.role === "docente") {
+    query = query.eq("docente_id", profile.id)
+  }
+
+  const { data } = await query
+  return data ?? []
+}
+
+export async function getEstudiantesDeGrupo(grupoId: string) {
+  const admin = createAdminClient()
+  // Obtener todos los perfiles con rol estudiante (simplificado, luego se puede agregar tabla de inscripciones)
+  const { data } = await admin
+    .from("conecta_profiles")
+    .select("id, nombre, apellido, email")
+    .eq("role", "estudiante")
+    .eq("activo", true)
+    .order("apellido")
+  return data ?? []
+}
+
+export async function getAsistenciaDelDia(grupoId: string, fecha: string) {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("conecta_asistencia")
+    .select("alumno_id, estado")
+    .eq("grupo_id", grupoId)
+    .eq("fecha", fecha)
+  return data ?? []
+}
+
+export async function guardarAsistencia(
+  grupoId: string,
+  fecha: string,
+  registros: { alumno_id: string; estado: "presente" | "ausente" | "tardanza" | "justificado" }[]
+) {
+  const profile = await getMyProfile()
+  if (!profile) return { error: "No autorizado" }
+
+  const admin = createAdminClient()
+
+  // Eliminar registros existentes del día para reemplazarlos
+  await admin
+    .from("conecta_asistencia")
+    .delete()
+    .eq("grupo_id", grupoId)
+    .eq("fecha", fecha)
+
+  if (registros.length === 0) return { error: null }
+
+  const rows = registros.map((r) => ({
+    grupo_id: grupoId,
+    alumno_id: r.alumno_id,
+    fecha,
+    estado: r.estado,
+    registrado_por: profile.id,
+  }))
+
+  const { error } = await admin.from("conecta_asistencia").insert(rows)
+  if (error) return { error: error.message }
+
+  revalidatePath("/app/asistencia")
+  return { error: null }
+}
+
+export async function getReporteMensual(grupoId: string, anio: number, mes: number) {
+  const admin = createAdminClient()
+
+  // Días del mes
+  const primerDia = `${anio}-${String(mes).padStart(2, "0")}-01`
+  const ultimoDia = new Date(anio, mes, 0)
+  const ultimoDiaStr = `${anio}-${String(mes).padStart(2, "0")}-${String(ultimoDia.getDate()).padStart(2, "0")}`
+
+  const { data } = await admin
+    .from("conecta_asistencia")
+    .select("alumno_id, fecha, estado, conecta_profiles!alumno_id(nombre, apellido)")
+    .eq("grupo_id", grupoId)
+    .gte("fecha", primerDia)
+    .lte("fecha", ultimoDiaStr)
+    .order("fecha")
+
+  return data ?? []
+}

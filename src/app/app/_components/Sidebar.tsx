@@ -45,7 +45,6 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/asistencia",
     icon: ClipboardList,
     roles: ["admin", "docente"],
-    soon: true,
   },
   {
     label: "Calendario",
