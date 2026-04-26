@@ -31,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Usuarios",
     href: "/app/admin/usuarios",
     icon: Users,
-    roles: ["admin"],
+    roles: ["admin", "docente", "financiero"],
   },
   {
     label: "Académico",

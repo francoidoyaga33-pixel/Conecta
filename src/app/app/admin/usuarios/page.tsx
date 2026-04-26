@@ -7,7 +7,7 @@ import {
   Trash2, X, Loader2, Shield, BookOpen,
   GraduationCap, Users, DollarSign
 } from "lucide-react"
-import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario } from "./actions"
+import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, getMyRole } from "./actions"
 
 type Role = "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
 
@@ -32,15 +32,22 @@ const ROLE_CONFIG: Record<Role, { label: string; icon: React.ElementType; color:
 export default function UsuariosPage() {
   const [users, setUsers] = useState<ConectaUser[]>([])
   const [loading, setLoading] = useState(true)
+  const [myRole, setMyRole] = useState<string>("")
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "todos">("todos")
   const [showModal, setShowModal] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const isAdmin = myRole === "admin"
+  const allowedRoles = isAdmin
+    ? (Object.keys(ROLE_CONFIG) as Role[])
+    : (["estudiante"] as Role[])
+
   async function loadUsers() {
     setLoading(true)
-    const { users } = await getUsuarios()
+    const [{ users }, role] = await Promise.all([getUsuarios(), getMyRole()])
     setUsers(users as ConectaUser[])
+    setMyRole(role)
     setLoading(false)
   }
 
@@ -222,6 +229,7 @@ export default function UsuariosPage() {
 
       {showModal && (
         <UserModal
+          allowedRoles={allowedRoles}
           onClose={() => setShowModal(false)}
           onSave={handleSave}
         />
@@ -231,13 +239,15 @@ export default function UsuariosPage() {
 }
 
 function UserModal({
+  allowedRoles,
   onClose,
   onSave,
 }: {
+  allowedRoles: Role[]
   onClose: () => void
   onSave: (data: { nombre: string; apellido: string; email: string; role: string; password: string }) => Promise<void>
 }) {
-  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", role: "docente", password: "" })
+  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", role: allowedRoles[0] ?? "estudiante", password: "" })
   const [loading, setLoading] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -302,7 +312,7 @@ function UserModal({
               onChange={handleChange}
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
             >
-              {(Object.keys(ROLE_CONFIG) as Role[]).map((r) => (
+              {allowedRoles.map((r) => (
                 <option key={r} value={r}>{ROLE_CONFIG[r].label}</option>
               ))}
             </select>

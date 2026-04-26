@@ -4,6 +4,18 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+export async function getMyRole(): Promise<string> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return ""
+  const { data } = await supabase
+    .from("conecta_profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+  return data?.role ?? ""
+}
+
 export async function getUsuarios() {
   const admin = createAdminClient()
   const { data, error } = await admin
@@ -22,9 +34,20 @@ export async function createUsuario(formData: {
   role: string
   password: string
 }) {
+  // Verificar que el rol asignado sea permitido para quien lo crea
+  const myRole = await getMyRole()
+  const canCreateAnyRole = myRole === "admin"
+  const canOnlyCreateEstudiante = myRole === "docente" || myRole === "financiero"
+
+  if (canOnlyCreateEstudiante && formData.role !== "estudiante") {
+    return { error: "Solo podés crear usuarios con rol de Estudiante." }
+  }
+  if (!canCreateAnyRole && !canOnlyCreateEstudiante) {
+    return { error: "No tenés permisos para crear usuarios." }
+  }
+
   const admin = createAdminClient()
 
-  // Crear usuario en Auth
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email: formData.email,
     password: formData.password,
@@ -38,7 +61,6 @@ export async function createUsuario(formData: {
 
   if (authError) return { error: authError.message }
 
-  // Insertar perfil
   const { error: profileError } = await admin
     .from("conecta_profiles")
     .insert({
