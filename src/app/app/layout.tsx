@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Sidebar } from "./_components/Sidebar"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Conecta — Sistema de Gestión",
 }
