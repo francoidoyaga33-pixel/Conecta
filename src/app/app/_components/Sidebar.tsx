@@ -95,7 +95,6 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/mensajes",
     icon: MessageSquare,
     roles: ["admin", "docente", "estudiante", "tutor_padre"],
-    soon: true,
   },
   {
     label: "Reportes",
