@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, BookOpen, ClipboardList,
   Calendar, DollarSign, MessageSquare, BarChart2,
   LogOut, ChevronRight, GraduationCap, NotebookPen, Bell,
-  FolderOpen, UserSearch,
+  FolderOpen, UserSearch, GraduationCap as TeacherIcon,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ConectaLogo } from "../../_components/ConectaLogo"
@@ -45,6 +45,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/app/admin/interesados",
     icon: UserSearch,
     roles: ["admin", "financiero"],
+  },
+  {
+    label: "Docentes",
+    href: "/app/admin/docentes",
+    icon: TeacherIcon,
+    roles: ["admin"],
   },
   {
     label: "Académico",
