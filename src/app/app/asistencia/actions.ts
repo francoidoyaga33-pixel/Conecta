@@ -24,7 +24,6 @@ export async function getGrupos() {
   let query = admin
     .from("conecta_grupos")
     .select("id, nombre, nivel, docente_id")
-    .eq("activo", true)
     .order("nombre")
 
   // Docente solo ve sus grupos
@@ -52,7 +51,7 @@ export async function getAsistenciaDelDia(grupoId: string, fecha: string) {
   const admin = createAdminClient()
   const { data } = await admin
     .from("conecta_asistencia")
-    .select("alumno_id, estado")
+    .select("estudiante_id, estado")
     .eq("grupo_id", grupoId)
     .eq("fecha", fecha)
   return data ?? []
@@ -79,10 +78,9 @@ export async function guardarAsistencia(
 
   const rows = registros.map((r) => ({
     grupo_id: grupoId,
-    alumno_id: r.alumno_id,
+    estudiante_id: r.alumno_id,
     fecha,
     estado: r.estado,
-    registrado_por: profile.id,
   }))
 
   const { error } = await admin.from("conecta_asistencia").insert(rows)
@@ -102,7 +100,7 @@ export async function getReporteMensual(grupoId: string, anio: number, mes: numb
 
   const { data } = await admin
     .from("conecta_asistencia")
-    .select("alumno_id, fecha, estado, conecta_profiles!alumno_id(nombre, apellido)")
+    .select("estudiante_id, fecha, estado, conecta_profiles!estudiante_id(nombre, apellido)")
     .eq("grupo_id", grupoId)
     .gte("fecha", primerDia)
     .lte("fecha", ultimoDiaStr)

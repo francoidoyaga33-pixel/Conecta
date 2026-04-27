@@ -24,7 +24,6 @@ export async function getGrupos() {
   let query = admin
     .from("conecta_grupos")
     .select("id, nombre, nivel, docente_id")
-    .eq("activo", true)
     .order("nombre")
 
   if (profile.role === "docente") {

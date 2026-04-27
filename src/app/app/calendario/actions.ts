@@ -21,7 +21,6 @@ export async function getGrupos() {
   const { data } = await admin
     .from("conecta_grupos")
     .select("id, nombre, nivel")
-    .eq("activo", true)
     .order("nombre")
   return data ?? []
 }
