@@ -15,7 +15,7 @@ type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
 
 interface Grupo { id: string; nombre: string; nivel: string }
 interface Estudiante { id: string; nombre: string; apellido: string; email: string }
-interface RegistroAsistencia { alumno_id: string; estado: EstadoAsistencia }
+interface RegistroAsistencia { estudiante_id: string; estado: EstadoAsistencia }
 
 const ESTADO_CONFIG: Record<EstadoAsistencia, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   presente:    { label: "Presente",    color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200",  icon: CheckCircle2 },
@@ -73,7 +73,7 @@ export default function AsistenciaPage() {
     ]).then(([ests, asist]) => {
       setEstudiantes(ests as Estudiante[])
       const map: Record<string, EstadoAsistencia> = {}
-      ;(asist as RegistroAsistencia[]).forEach((r) => { map[r.alumno_id] = r.estado })
+      ;(asist as RegistroAsistencia[]).forEach((r) => { map[r.estudiante_id] = r.estado })
       // Default: presente para los que no tienen registro
       ;(ests as Estudiante[]).forEach((e) => {
         if (!map[e.id]) map[e.id] = "presente"
@@ -121,7 +121,7 @@ export default function AsistenciaPage() {
     const diasSet = new Set<string>()
 
     reporteData.forEach((r: any) => {
-      const alumnoId = r.alumno_id
+      const alumnoId = r.estudiante_id
       const nombre = r.conecta_profiles?.nombre ?? "?"
       const apellido = r.conecta_profiles?.apellido ?? "?"
       if (!byAlumno[alumnoId]) byAlumno[alumnoId] = { nombre, apellido, dias: {} }
