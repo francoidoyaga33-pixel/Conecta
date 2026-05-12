@@ -23,20 +23,21 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession lee el JWT desde la cookie sin hacer llamadas de red — apto para middleware
+  const { data: { session } } = await supabase.auth.getSession()
   const { pathname } = request.nextUrl
 
-  // Protect /app and /cambiar-contrasena routes
+  // Proteger /app/* y /cambiar-contrasena
   if (pathname.startsWith("/app/") || pathname === "/cambiar-contrasena") {
-    if (!user) {
+    if (!session) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = "/login"
       return NextResponse.redirect(loginUrl)
     }
   }
 
-  // Redirect logged-in users away from login
-  if (pathname === "/login" && user) {
+  // Redirigir usuarios logueados fuera del login
+  if (pathname === "/login" && session) {
     const dashboardUrl = request.nextUrl.clone()
     dashboardUrl.pathname = "/app/dashboard"
     return NextResponse.redirect(dashboardUrl)
@@ -46,7 +47,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Solo interceptar rutas de la app, no assets ni API de Next.js
+  matcher: ["/app/:path*", "/login", "/cambiar-contrasena"],
 }
