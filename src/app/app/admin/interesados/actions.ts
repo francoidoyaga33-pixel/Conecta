@@ -15,7 +15,7 @@ export async function getInteresados() {
 export async function crearInteresado(payload: {
   nombre: string; apellido: string; email: string; telefono: string
   cursos_interes: string; canal: string; estado_venta: string
-  seguimiento: string; observaciones: string
+  seguimiento: string; observaciones: string; motivo_perdido: string
 }) {
   const admin = createAdminClient()
   const { error } = await admin.from("conecta_interesados").insert(payload)
@@ -27,7 +27,7 @@ export async function crearInteresado(payload: {
 export async function actualizarInteresado(id: string, payload: {
   nombre: string; apellido: string; email: string; telefono: string
   cursos_interes: string; canal: string; estado_venta: string
-  seguimiento: string; observaciones: string
+  seguimiento: string; observaciones: string; motivo_perdido: string
 }) {
   const admin = createAdminClient()
   const { error } = await admin

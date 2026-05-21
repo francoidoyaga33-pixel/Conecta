@@ -12,7 +12,8 @@ import { getInteresados, crearInteresado, actualizarInteresado, eliminarInteresa
 interface Interesado {
   id: string; nombre: string; apellido: string; email: string; telefono: string
   cursos_interes: string; canal: string; estado_venta: string
-  seguimiento: string; observaciones: string; created_at: string; updated_at: string
+  seguimiento: string; observaciones: string; motivo_perdido: string
+  created_at: string; updated_at: string
 }
 
 const CANAL_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
@@ -34,7 +35,7 @@ const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string; 
 const EMPTY_FORM = {
   nombre: "", apellido: "", email: "", telefono: "",
   cursos_interes: "", canal: "instagram", estado_venta: "nuevo",
-  seguimiento: "", observaciones: "",
+  seguimiento: "", observaciones: "", motivo_perdido: "",
 }
 
 function timeAgo(iso: string) {
@@ -81,6 +82,7 @@ export default function InteresadosPage() {
       nombre: i.nombre, apellido: i.apellido, email: i.email, telefono: i.telefono,
       cursos_interes: i.cursos_interes, canal: i.canal, estado_venta: i.estado_venta,
       seguimiento: i.seguimiento, observaciones: i.observaciones,
+      motivo_perdido: i.motivo_perdido ?? "",
     })
     setSaved(false)
     setShowModal(true)
@@ -114,10 +116,14 @@ export default function InteresadosPage() {
     })
   }
 
-  // Cambio de estado rápido inline
+  // Cambio de estado rápido inline — si pasa a "perdido" abre el modal para capturar el motivo
   function handleCambiarEstado(id: string, nuevoEstado: string) {
     const interesado = interesados.find(i => i.id === id)
     if (!interesado) return
+    if (nuevoEstado === "perdido") {
+      abrirEditar({ ...interesado, estado_venta: "perdido" })
+      return
+    }
     startTransition(async () => {
       await actualizarInteresado(id, { ...interesado, estado_venta: nuevoEstado })
       await loadData()
@@ -233,6 +239,11 @@ export default function InteresadosPage() {
                               {i.email && <span className="text-[10px] text-[#aaa] flex items-center gap-0.5"><Mail className="h-2.5 w-2.5" />{i.email}</span>}
                               {i.telefono && <span className="text-[10px] text-[#aaa] flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" />{i.telefono}</span>}
                             </div>
+                            {i.estado_venta === "perdido" && i.motivo_perdido && (
+                              <p className="text-[10px] text-red-500 mt-0.5 italic truncate max-w-[200px]">
+                                Motivo: {i.motivo_perdido}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -338,6 +349,15 @@ export default function InteresadosPage() {
                   placeholder="Ej: Llamé el lunes, quedó en confirmar la semana que viene..."
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 resize-none" />
               </div>
+
+              {form.estado_venta === "perdido" && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3">
+                  <label className="block text-xs font-semibold text-red-700 mb-1.5">Motivo de pérdida</label>
+                  <textarea name="motivo_perdido" value={form.motivo_perdido} onChange={handleChange} rows={2}
+                    placeholder="Ej: Eligió otra institución, precio elevado, falta de horarios..."
+                    className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-red-200 resize-none" />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-[#555] mb-1.5">Observaciones</label>
