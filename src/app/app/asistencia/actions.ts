@@ -105,14 +105,14 @@ export async function getAsistenciaDocentesDelDia(fecha: string) {
   const admin = createAdminClient()
   const { data } = await admin
     .from("conecta_asistencia_docentes")
-    .select("docente_id, estado, horas_trabajadas, observaciones")
+    .select("docente_id, estado, horas_trabajadas, materia, observaciones")
     .eq("fecha", fecha)
   return data ?? []
 }
 
 export async function guardarAsistenciaDocentes(
   fecha: string,
-  registros: { docente_id: string; estado: string; horas_trabajadas: number; observaciones: string }[]
+  registros: { docente_id: string; estado: string; horas_trabajadas: number; materia: string; observaciones: string }[]
 ) {
   const admin = createAdminClient()
 

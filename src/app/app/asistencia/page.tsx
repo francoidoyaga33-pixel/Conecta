@@ -18,7 +18,7 @@ interface Grupo { id: string; nombre: string; nivel: string }
 interface Estudiante { id: string; nombre: string; apellido: string; email: string }
 interface RegistroAsistencia { estudiante_id: string; estado: EstadoAsistencia }
 interface Docente { id: string; nombre: string; apellido: string; avatar_url: string | null }
-interface RegistroDocente { docente_id: string; estado: EstadoAsistencia; horas_trabajadas: number; observaciones: string }
+interface RegistroDocente { docente_id: string; estado: EstadoAsistencia; horas_trabajadas: number; materia: string; observaciones: string }
 
 const ESTADO_CONFIG: Record<EstadoAsistencia, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   presente:    { label: "Presente",    color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200",  icon: CheckCircle2 },
@@ -121,7 +121,7 @@ export default function AsistenciaPage() {
       const map: Record<string, RegistroDocente> = {}
       docentes.forEach((d) => {
         const existing = (asist as RegistroDocente[]).find((r) => r.docente_id === d.id)
-        map[d.id] = existing ?? { docente_id: d.id, estado: "presente", horas_trabajadas: 0, observaciones: "" }
+        map[d.id] = existing ?? { docente_id: d.id, estado: "presente", horas_trabajadas: 0, materia: "", observaciones: "" }
       })
       setRegistrosDoc(map)
       setLoadingDoc(false)
@@ -299,6 +299,7 @@ export default function AsistenciaPage() {
                           <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Docente</th>
                           <th className="text-center px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Estado</th>
                           <th className="text-center px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Hs. trabajadas</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider hidden md:table-cell">Materia</th>
                           <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider hidden lg:table-cell">Observaciones</th>
                         </tr>
                       </thead>
@@ -346,6 +347,15 @@ export default function AsistenciaPage() {
                                     className="w-20 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-center text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
                                   />
                                 </div>
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell">
+                                <input
+                                  type="text"
+                                  value={reg.materia}
+                                  onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
+                                  placeholder="Ej: Matemáticas"
+                                  className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+                                />
                               </td>
                               <td className="px-4 py-3 hidden lg:table-cell">
                                 <input
