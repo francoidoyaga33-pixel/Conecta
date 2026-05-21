@@ -90,6 +90,58 @@ export async function guardarAsistencia(
   return { error: null }
 }
 
+export async function getDocentes() {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("conecta_profiles")
+    .select("id, nombre, apellido, avatar_url")
+    .eq("role", "docente")
+    .eq("activo", true)
+    .order("apellido")
+  return data ?? []
+}
+
+export async function getAsistenciaDocentesDelDia(fecha: string) {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("conecta_asistencia_docentes")
+    .select("docente_id, estado, horas_trabajadas, observaciones")
+    .eq("fecha", fecha)
+  return data ?? []
+}
+
+export async function guardarAsistenciaDocentes(
+  fecha: string,
+  registros: { docente_id: string; estado: string; horas_trabajadas: number; observaciones: string }[]
+) {
+  const admin = createAdminClient()
+
+  for (const r of registros) {
+    await admin
+      .from("conecta_asistencia_docentes")
+      .upsert({ ...r, fecha }, { onConflict: "docente_id,fecha" })
+  }
+
+  revalidatePath("/app/asistencia")
+  return { error: null }
+}
+
+export async function getReporteMensualDocentes(anio: number, mes: number) {
+  const admin = createAdminClient()
+  const primerDia = `${anio}-${String(mes).padStart(2, "0")}-01`
+  const ultimoDia = new Date(anio, mes, 0)
+  const ultimoDiaStr = `${anio}-${String(mes).padStart(2, "0")}-${String(ultimoDia.getDate()).padStart(2, "0")}`
+
+  const { data } = await admin
+    .from("conecta_asistencia_docentes")
+    .select("docente_id, fecha, estado, horas_trabajadas, conecta_profiles!docente_id(nombre, apellido)")
+    .gte("fecha", primerDia)
+    .lte("fecha", ultimoDiaStr)
+    .order("fecha")
+
+  return data ?? []
+}
+
 export async function getReporteMensual(grupoId: string, anio: number, mes: number) {
   const admin = createAdminClient()
 

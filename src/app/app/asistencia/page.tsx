@@ -8,7 +8,8 @@ import {
 } from "lucide-react"
 import {
   getGrupos, getEstudiantesDeGrupo, getAsistenciaDelDia,
-  guardarAsistencia, getReporteMensual, getMyProfile
+  guardarAsistencia, getReporteMensual, getMyProfile,
+  getDocentes, getAsistenciaDocentesDelDia, guardarAsistenciaDocentes, getReporteMensualDocentes,
 } from "./actions"
 
 type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
@@ -16,6 +17,8 @@ type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
 interface Grupo { id: string; nombre: string; nivel: string }
 interface Estudiante { id: string; nombre: string; apellido: string; email: string }
 interface RegistroAsistencia { estudiante_id: string; estado: EstadoAsistencia }
+interface Docente { id: string; nombre: string; apellido: string; avatar_url: string | null }
+interface RegistroDocente { docente_id: string; estado: EstadoAsistencia; horas_trabajadas: number; observaciones: string }
 
 const ESTADO_CONFIG: Record<EstadoAsistencia, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   presente:    { label: "Presente",    color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200",  icon: CheckCircle2 },
@@ -34,6 +37,7 @@ function todayISO() {
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 
 export default function AsistenciaPage() {
+  const [modo, setModo] = useState<"alumnos" | "docentes">("alumnos")
   const [vista, setVista] = useState<"registro" | "reporte">("registro")
   const [grupos, setGrupos] = useState<Grupo[]>([])
   const [grupoId, setGrupoId] = useState("")
@@ -46,12 +50,23 @@ export default function AsistenciaPage() {
   const [saved, setSaved] = useState(false)
   const [myRole, setMyRole] = useState("")
 
-  // Reporte
+  // Reporte alumnos
   const now = new Date()
   const [reporteAnio, setReporteAnio] = useState(now.getFullYear())
   const [reporteMes, setReporteMes] = useState(now.getMonth() + 1)
   const [reporteData, setReporteData] = useState<any[]>([])
   const [loadingReporte, setLoadingReporte] = useState(false)
+
+  // Docentes
+  const [docentes, setDocentes] = useState<Docente[]>([])
+  const [fechaDoc, setFechaDoc] = useState(todayISO())
+  const [registrosDoc, setRegistrosDoc] = useState<Record<string, RegistroDocente>>({})
+  const [loadingDoc, setLoadingDoc] = useState(false)
+  const [savedDoc, setSavedDoc] = useState(false)
+  const [reporteDocData, setReporteDocData] = useState<any[]>([])
+  const [loadingReporteDoc, setLoadingReporteDoc] = useState(false)
+  const [reporteDocAnio, setReporteDocAnio] = useState(now.getFullYear())
+  const [reporteDocMes, setReporteDocMes] = useState(now.getMonth() + 1)
 
   useEffect(() => {
     async function init() {
@@ -91,6 +106,64 @@ export default function AsistenciaPage() {
       setLoadingReporte(false)
     })
   }, [vista, grupoId, reporteAnio, reporteMes])
+
+  // Cargar docentes cuando se activa el modo docentes
+  useEffect(() => {
+    if (modo !== "docentes") return
+    getDocentes().then((data) => setDocentes(data as Docente[]))
+  }, [modo])
+
+  // Cargar asistencia del día para docentes
+  useEffect(() => {
+    if (modo !== "docentes" || vista !== "registro" || docentes.length === 0) return
+    setLoadingDoc(true)
+    getAsistenciaDocentesDelDia(fechaDoc).then((asist) => {
+      const map: Record<string, RegistroDocente> = {}
+      docentes.forEach((d) => {
+        const existing = (asist as RegistroDocente[]).find((r) => r.docente_id === d.id)
+        map[d.id] = existing ?? { docente_id: d.id, estado: "presente", horas_trabajadas: 0, observaciones: "" }
+      })
+      setRegistrosDoc(map)
+      setLoadingDoc(false)
+    })
+  }, [modo, vista, fechaDoc, docentes])
+
+  // Reporte mensual docentes
+  useEffect(() => {
+    if (modo !== "docentes" || vista !== "reporte") return
+    setLoadingReporteDoc(true)
+    getReporteMensualDocentes(reporteDocAnio, reporteDocMes).then((data) => {
+      setReporteDocData(data)
+      setLoadingReporteDoc(false)
+    })
+  }, [modo, vista, reporteDocAnio, reporteDocMes])
+
+  function handleGuardarDocentes() {
+    startTransition(async () => {
+      const rows = Object.values(registrosDoc)
+      await guardarAsistenciaDocentes(fechaDoc, rows)
+      setSavedDoc(true)
+      setTimeout(() => setSavedDoc(false), 2500)
+    })
+  }
+
+  function buildReporteDocentes() {
+    const byDocente: Record<string, { nombre: string; apellido: string; dias: Record<string, { estado: EstadoAsistencia; horas: number }> }> = {}
+    const diasSet = new Set<string>()
+
+    reporteDocData.forEach((r: any) => {
+      const id = r.docente_id
+      const nombre = r.conecta_profiles?.nombre ?? "?"
+      const apellido = r.conecta_profiles?.apellido ?? "?"
+      if (!byDocente[id]) byDocente[id] = { nombre, apellido, dias: {} }
+      byDocente[id].dias[r.fecha] = { estado: r.estado, horas: r.horas_trabajadas }
+      diasSet.add(r.fecha)
+    })
+
+    const dias = Array.from(diasSet).sort()
+    const docentesList = Object.entries(byDocente).sort((a, b) => a[1].apellido.localeCompare(b[1].apellido))
+    return { dias, docentesList }
+  }
 
   function setEstado(alumnoId: string, estado: EstadoAsistencia) {
     setRegistros((prev) => ({ ...prev, [alumnoId]: estado }))
@@ -164,6 +237,223 @@ export default function AsistenciaPage() {
 
       <main className="flex-1 p-6 space-y-5 max-w-5xl mx-auto w-full">
 
+        {/* Toggle alumnos / docentes — solo admin */}
+        {myRole === "admin" && (
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+            {(["alumnos", "docentes"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setModo(m); setVista("registro") }}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize ${
+                  modo === m ? "bg-white text-[#2B7A9E] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {m === "alumnos" ? "Alumnos" : "Docentes"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── VISTA DOCENTES ── */}
+        {modo === "docentes" && (
+          <>
+            {/* Sub-tabs registro / reporte */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+                {(["registro", "reporte"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setVista(v)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                      vista === v ? "bg-white text-[#2B7A9E] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {v === "registro" ? "Registro diario" : "Reporte mensual"}
+                  </button>
+                ))}
+              </div>
+              {vista === "registro" && (
+                <input
+                  type="date" value={fechaDoc}
+                  onChange={(e) => setFechaDoc(e.target.value)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+                />
+              )}
+            </div>
+
+            {vista === "registro" && (
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                {loadingDoc ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
+                  </div>
+                ) : docentes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <p className="text-sm text-[#aaa]">Sin docentes activos</p>
+                  </div>
+                ) : (
+                  <>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 bg-gray-50">
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Docente</th>
+                          <th className="text-center px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Estado</th>
+                          <th className="text-center px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Hs. trabajadas</th>
+                          <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider hidden lg:table-cell">Observaciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {docentes.map((d) => {
+                          const reg = registrosDoc[d.id] ?? { docente_id: d.id, estado: "presente", horas_trabajadas: 0, observaciones: "" }
+                          const estadoCfg = ESTADO_CONFIG[reg.estado]
+                          return (
+                            <tr key={d.id} className="hover:bg-gray-50/50">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-8 w-8 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-xs font-bold text-[#2B7A9E] shrink-0 overflow-hidden">
+                                    {d.avatar_url
+                                      ? <img src={d.avatar_url} alt="" className="h-full w-full object-cover" />
+                                      : `${d.nombre.charAt(0)}${d.apellido.charAt(0)}`}
+                                  </div>
+                                  <p className="font-medium text-[#3D3D3D]">{d.apellido}, {d.nombre}</p>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-center gap-1 flex-wrap">
+                                  {ESTADOS.map((e) => {
+                                    const cfg = ESTADO_CONFIG[e]
+                                    const active = reg.estado === e
+                                    return (
+                                      <button
+                                        key={e}
+                                        onClick={() => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, estado: e } }))}
+                                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${
+                                          active ? `${cfg.bg} ${cfg.color} border-current` : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        {cfg.label}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex justify-center">
+                                  <input
+                                    type="number" min="0" max="12" step="0.5"
+                                    value={reg.horas_trabajadas}
+                                    onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, horas_trabajadas: Number(e.target.value) } }))}
+                                    className="w-20 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-center text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 hidden lg:table-cell">
+                                <input
+                                  type="text"
+                                  value={reg.observaciones}
+                                  onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, observaciones: e.target.value } }))}
+                                  placeholder="Opcional..."
+                                  className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+                                />
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                    <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+                      {savedDoc
+                        ? <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium"><CheckCircle2 className="h-4 w-4" /> Guardado</span>
+                        : <span />}
+                      <button
+                        onClick={handleGuardarDocentes}
+                        disabled={isPending}
+                        className="flex items-center gap-2 rounded-lg bg-[#2B7A9E] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#246a8a] disabled:opacity-70"
+                      >
+                        {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</> : <><Save className="h-4 w-4" /> Guardar</>}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {vista === "reporte" && (
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <select value={reporteDocMes} onChange={(e) => setReporteDocMes(Number(e.target.value))}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20">
+                    {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                  </select>
+                  <input type="number" value={reporteDocAnio} onChange={(e) => setReporteDocAnio(Number(e.target.value))}
+                    className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20" />
+                </div>
+                {loadingReporteDoc ? (
+                  <div className="flex items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
+                    <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
+                  </div>
+                ) : reporteDocData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100">
+                    <p className="text-sm text-[#aaa]">Sin datos para este mes</p>
+                  </div>
+                ) : (() => {
+                  const { dias, docentesList } = buildReporteDocentes()
+                  return (
+                    <div className="bg-white rounded-xl border border-gray-100 overflow-auto">
+                      <table className="text-xs w-full">
+                        <thead>
+                          <tr className="border-b border-gray-100 bg-gray-50">
+                            <th className="text-left px-4 py-3 font-semibold text-[#888] uppercase tracking-wider sticky left-0 bg-gray-50">Docente</th>
+                            {dias.map((d) => (
+                              <th key={d} className="text-center px-2 py-3 font-semibold text-[#888] min-w-[36px]">
+                                {new Date(d + "T12:00:00").getDate()}
+                              </th>
+                            ))}
+                            <th className="text-center px-3 py-3 font-semibold text-[#888]">Total hs</th>
+                            <th className="text-center px-3 py-3 font-semibold text-[#888]">Presencia</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {docentesList.map(([id, info]) => {
+                            const totalHs = Object.values(info.dias).reduce((s, d) => s + (d.horas ?? 0), 0)
+                            const presentes = Object.values(info.dias).filter((d) => d.estado === "presente" || d.estado === "tardanza").length
+                            const pct = dias.length > 0 ? Math.round((presentes / dias.length) * 100) : null
+                            return (
+                              <tr key={id} className="hover:bg-gray-50/50">
+                                <td className="px-4 py-2 font-medium text-[#3D3D3D] sticky left-0 bg-white">
+                                  {info.apellido}, {info.nombre}
+                                </td>
+                                {dias.map((d) => {
+                                  const reg = info.dias[d]
+                                  if (!reg) return <td key={d} className="text-center px-2 py-2 text-[#ddd]">—</td>
+                                  return (
+                                    <td key={d} className={`text-center px-2 py-2 font-semibold rounded ${colorCelda[reg.estado]}`}>
+                                      {abrev[reg.estado]}
+                                    </td>
+                                  )
+                                })}
+                                <td className="text-center px-3 py-2 font-bold text-violet-700">{totalHs}h</td>
+                                <td className="text-center px-3 py-2">
+                                  <span className={`font-bold ${pct !== null && pct >= 80 ? "text-emerald-700" : pct !== null && pct >= 60 ? "text-amber-700" : "text-red-600"}`}>
+                                    {pct !== null ? `${pct}%` : "—"}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── VISTA ALUMNOS ── */}
+        {modo === "alumnos" && (
+          <>
         {/* Controles superiores */}
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
@@ -348,8 +638,8 @@ export default function AsistenciaPage() {
           </>
         )}
 
-        {/* ── VISTA REPORTE ── */}
-        {vista === "reporte" && (
+          {/* ── VISTA REPORTE ALUMNOS ── */}
+          {vista === "reporte" && (
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {loadingReporte ? (
               <div className="flex items-center justify-center py-16">
@@ -431,6 +721,8 @@ export default function AsistenciaPage() {
               )
             })()}
           </div>
+          )}
+          </>
         )}
       </main>
     </>
