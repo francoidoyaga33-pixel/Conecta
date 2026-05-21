@@ -101,3 +101,58 @@ export async function eliminarEvento(id: string) {
   revalidatePath("/app/calendario")
   return { error: null }
 }
+
+export async function getHorario() {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("conecta_horarios")
+    .select(`
+      id, dia_semana, hora_inicio, hora_fin,
+      materia, aula, color, grupo_id, docente_id,
+      conecta_grupos(nombre, nivel),
+      conecta_profiles!docente_id(nombre, apellido)
+    `)
+    .order("dia_semana")
+    .order("hora_inicio")
+  return data ?? []
+}
+
+export async function crearHorario(payload: {
+  dia_semana: number
+  hora_inicio: string
+  hora_fin: string
+  materia: string
+  grupo_id: string | null
+  aula: string | null
+  color: string
+}) {
+  const admin = createAdminClient()
+  const { error } = await admin.from("conecta_horarios").insert(payload)
+  if (error) return { error: error.message }
+  revalidatePath("/app/calendario")
+  return { error: null }
+}
+
+export async function actualizarHorario(id: string, payload: {
+  dia_semana: number
+  hora_inicio: string
+  hora_fin: string
+  materia: string
+  grupo_id: string | null
+  aula: string | null
+  color: string
+}) {
+  const admin = createAdminClient()
+  const { error } = await admin.from("conecta_horarios").update(payload).eq("id", id)
+  if (error) return { error: error.message }
+  revalidatePath("/app/calendario")
+  return { error: null }
+}
+
+export async function eliminarHorario(id: string) {
+  const admin = createAdminClient()
+  const { error } = await admin.from("conecta_horarios").delete().eq("id", id)
+  if (error) return { error: error.message }
+  revalidatePath("/app/calendario")
+  return { error: null }
+}
