@@ -80,7 +80,6 @@ export async function getDocenteDetalle(docenteId: string) {
       .from("conecta_grupos")
       .select("id, nombre, nivel")
       .eq("docente_id", docenteId)
-      .eq("activo", true)
       .order("nombre"),
     admin
       .from("conecta_carga_horaria")
