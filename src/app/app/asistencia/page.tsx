@@ -349,31 +349,18 @@ export default function AsistenciaPage() {
                                 </div>
                               </td>
                               <td className="px-4 py-3 hidden md:table-cell">
-                                {(() => {
-                                  const cursosDocente = grupos.filter((g) => g.docente_id === d.id)
-                                  return cursosDocente.length > 0 ? (
-                                    <select
-                                      value={reg.materia}
-                                      onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
-                                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 bg-white"
-                                    >
-                                      <option value="">— Seleccionar curso —</option>
-                                      {cursosDocente.map((g) => (
-                                        <option key={g.id} value={g.nombre}>
-                                          {g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : (
-                                    <input
-                                      type="text"
-                                      value={reg.materia}
-                                      onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
-                                      placeholder="Sin cursos asignados"
-                                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
-                                    />
-                                  )
-                                })()}
+                                <select
+                                  value={reg.materia}
+                                  onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
+                                  className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 bg-white"
+                                >
+                                  <option value="">— Seleccionar curso —</option>
+                                  {grupos.map((g) => (
+                                    <option key={g.id} value={g.nombre}>
+                                      {g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}
+                                    </option>
+                                  ))}
+                                </select>
                               </td>
                               <td className="px-4 py-3 hidden lg:table-cell">
                                 <input
