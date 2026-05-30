@@ -5,9 +5,9 @@ import { TopBar } from "../../_components/TopBar"
 import {
   Plus, Search, UserCheck, UserX,
   Trash2, X, Loader2, Shield, BookOpen,
-  GraduationCap, Users, DollarSign
+  GraduationCap, Users, DollarSign, KeyRound
 } from "lucide-react"
-import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, getMyRole } from "./actions"
+import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, changePassword, getMyRole } from "./actions"
 
 type Role = "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
 
@@ -36,6 +36,7 @@ export default function UsuariosPage() {
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "todos">("todos")
   const [showModal, setShowModal] = useState(false)
+  const [passwordTarget, setPasswordTarget] = useState<ConectaUser | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const isAdmin = myRole === "admin"
@@ -73,6 +74,15 @@ export default function UsuariosPage() {
       await deleteUsuario(userId)
       await loadUsers()
     })
+  }
+
+  async function handleChangePassword(userId: string, newPassword: string) {
+    const result = await changePassword(userId, newPassword)
+    if (result.error) {
+      alert("Error: " + result.error)
+      return
+    }
+    setPasswordTarget(null)
   }
 
   async function handleSave(data: { nombre: string; apellido: string; email: string; role: string; password: string }) {
@@ -195,6 +205,14 @@ export default function UsuariosPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end">
                           <button
+                            onClick={() => setPasswordTarget(user)}
+                            disabled={isPending}
+                            className="p-1.5 rounded-lg text-[#aaa] hover:text-[#2B7A9E] hover:bg-[#2B7A9E]/10 transition-colors disabled:opacity-40"
+                            title="Cambiar contraseña"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </button>
+                          <button
                             onClick={() => handleToggleActive(user.id, user.activo)}
                             disabled={isPending}
                             className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
@@ -234,7 +252,100 @@ export default function UsuariosPage() {
           onSave={handleSave}
         />
       )}
+
+      {passwordTarget && (
+        <ChangePasswordModal
+          user={passwordTarget}
+          onClose={() => setPasswordTarget(null)}
+          onSave={handleChangePassword}
+        />
+      )}
     </>
+  )
+}
+
+function ChangePasswordModal({
+  user,
+  onClose,
+  onSave,
+}: {
+  user: ConectaUser
+  onClose: () => void
+  onSave: (userId: string, newPassword: string) => Promise<void>
+}) {
+  const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (password !== confirm) {
+      alert("Las contraseñas no coinciden.")
+      return
+    }
+    setLoading(true)
+    await onSave(user.id, password)
+    setLoading(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-base font-bold text-[#3D3D3D]">Cambiar contraseña</h2>
+            <p className="text-xs text-[#aaa] mt-0.5">{user.nombre} {user.apellido}</p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-[#aaa] hover:text-[#3D3D3D]">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-[#555] mb-1.5">Nueva contraseña</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-[#555] mb-1.5">Confirmar contraseña</label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Repetí la contraseña"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-semibold text-[#555] hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 rounded-lg bg-[#2B7A9E] py-2.5 text-sm font-semibold text-white hover:bg-[#246a8a] transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+            >
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Guardando...</> : "Guardar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }
 

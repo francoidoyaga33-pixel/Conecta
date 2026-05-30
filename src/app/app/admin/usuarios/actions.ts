@@ -99,6 +99,13 @@ export async function toggleUsuarioActivo(userId: string, activo: boolean) {
   return { error: null }
 }
 
+export async function changePassword(userId: string, newPassword: string) {
+  const admin = createAdminClient()
+  const { error } = await admin.auth.admin.updateUserById(userId, { password: newPassword })
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
 export async function deleteUsuario(userId: string) {
   const admin = createAdminClient()
 
