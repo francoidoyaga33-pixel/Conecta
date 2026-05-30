@@ -14,7 +14,7 @@ import {
 
 type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
 
-interface Grupo { id: string; nombre: string; nivel: string }
+interface Grupo { id: string; nombre: string; nivel: string; docente_id: string | null }
 interface Estudiante { id: string; nombre: string; apellido: string; email: string }
 interface RegistroAsistencia { estudiante_id: string; estado: EstadoAsistencia }
 interface Docente { id: string; nombre: string; apellido: string; avatar_url: string | null }
@@ -349,13 +349,31 @@ export default function AsistenciaPage() {
                                 </div>
                               </td>
                               <td className="px-4 py-3 hidden md:table-cell">
-                                <input
-                                  type="text"
-                                  value={reg.materia}
-                                  onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
-                                  placeholder="Ej: Matemáticas"
-                                  className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
-                                />
+                                {(() => {
+                                  const cursosDocente = grupos.filter((g) => g.docente_id === d.id)
+                                  return cursosDocente.length > 0 ? (
+                                    <select
+                                      value={reg.materia}
+                                      onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
+                                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 bg-white"
+                                    >
+                                      <option value="">— Seleccionar curso —</option>
+                                      {cursosDocente.map((g) => (
+                                        <option key={g.id} value={g.nombre}>
+                                          {g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={reg.materia}
+                                      onChange={(e) => setRegistrosDoc((prev) => ({ ...prev, [d.id]: { ...reg, materia: e.target.value } }))}
+                                      placeholder="Sin cursos asignados"
+                                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+                                    />
+                                  )
+                                })()}
                               </td>
                               <td className="px-4 py-3 hidden lg:table-cell">
                                 <input
