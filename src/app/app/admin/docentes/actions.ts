@@ -154,7 +154,6 @@ export async function getGruposParaAsignar() {
   const { data: grupos } = await admin
     .from("conecta_grupos")
     .select("id, nombre, nivel, docente_id")
-    .eq("activo", true)
     .order("nombre")
 
   if (!grupos || grupos.length === 0) return []
