@@ -149,6 +149,46 @@ export async function getDocenteDetalle(docenteId: string) {
   }
 }
 
+export async function getGruposParaAsignar() {
+  const admin = createAdminClient()
+  const { data: grupos } = await admin
+    .from("conecta_grupos")
+    .select("id, nombre, nivel, docente_id")
+    .eq("activo", true)
+    .order("nombre")
+
+  if (!grupos || grupos.length === 0) return []
+
+  const docenteIds = [...new Set(grupos.map(g => g.docente_id).filter(Boolean))]
+  let docentes: { id: string; nombre: string; apellido: string }[] = []
+  if (docenteIds.length > 0) {
+    const { data } = await admin
+      .from("conecta_profiles")
+      .select("id, nombre, apellido")
+      .in("id", docenteIds)
+    docentes = data ?? []
+  }
+
+  return grupos.map(g => {
+    const doc = docentes.find(d => d.id === g.docente_id)
+    return {
+      ...g,
+      docenteNombre: doc ? `${doc.apellido}, ${doc.nombre}` : null,
+    }
+  })
+}
+
+export async function asignarGrupoADocente(grupoId: string, docenteId: string | null) {
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from("conecta_grupos")
+    .update({ docente_id: docenteId })
+    .eq("id", grupoId)
+  if (error) return { error: error.message }
+  revalidatePath("/app/admin/docentes")
+  return { error: null }
+}
+
 export async function guardarCargaHoraria(payload: {
   docenteId: string
   grupoId: string

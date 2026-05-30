@@ -7,15 +7,19 @@ import { TopBar } from "../../../_components/TopBar"
 import {
   ChevronLeft, Loader2, BookOpen, Users, TrendingUp,
   TrendingDown, Clock, ClipboardCheck, Pencil, Save,
-  CheckCircle2, X, BarChart2, DollarSign,
+  CheckCircle2, X, BarChart2, DollarSign, Plus,
 } from "lucide-react"
-import { getDocenteDetalle, guardarCargaHoraria } from "../actions"
+import { getDocenteDetalle, guardarCargaHoraria, getGruposParaAsignar, asignarGrupoADocente } from "../actions"
 
 interface GrupoMetrica {
   id: string; nombre: string; nivel: string
   habilitados: number; inactivos: number; total: number
   retencion: number | null; asistenciaPromedio: number | null
   horasSemanales: number; cargaId: string | null
+}
+interface GrupoAsignable {
+  id: string; nombre: string; nivel: string
+  docente_id: string | null; docenteNombre: string | null
 }
 interface Pago {
   id: string; periodo: string; horas_contratadas: number; horas_dictadas: number
@@ -61,6 +65,30 @@ export default function DocenteDetallePage() {
   const [obsForm, setObsForm] = useState("")
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
+
+  // Modal asignar grupos
+  const [showAsignar, setShowAsignar] = useState(false)
+  const [gruposDisponibles, setGruposDisponibles] = useState<GrupoAsignable[]>([])
+  const [loadingGrupos, setLoadingGrupos] = useState(false)
+
+  async function abrirAsignar() {
+    setShowAsignar(true)
+    setLoadingGrupos(true)
+    const data = await getGruposParaAsignar()
+    setGruposDisponibles(data as GrupoAsignable[])
+    setLoadingGrupos(false)
+  }
+
+  async function toggleGrupo(grupo: GrupoAsignable) {
+    const esMio = grupo.docente_id === id
+    const nuevoDocente = esMio ? null : id
+    const result = await asignarGrupoADocente(grupo.id, nuevoDocente)
+    if (result.error) { alert("Error: " + result.error); return }
+    setGruposDisponibles(prev =>
+      prev.map(g => g.id === grupo.id ? { ...g, docente_id: nuevoDocente, docenteNombre: esMio ? null : (data?.profile ? `${data.profile.apellido}, ${data.profile.nombre}` : null) } : g)
+    )
+    await loadData()
+  }
 
   async function loadData() {
     const result = await getDocenteDetalle(id)
@@ -191,9 +219,17 @@ export default function DocenteDetallePage() {
 
         {/* Tabla de grupos con métricas */}
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-            <BarChart2 className="h-4 w-4 text-[#2B7A9E]" />
-            <h2 className="text-sm font-bold text-[#3D3D3D]">Resultados por grupo — Ciclo {data?.cicloActual}</h2>
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-[#2B7A9E]" />
+              <h2 className="text-sm font-bold text-[#3D3D3D]">Grupos asignados — Ciclo {data?.cicloActual}</h2>
+            </div>
+            <button
+              onClick={abrirAsignar}
+              className="flex items-center gap-1.5 rounded-lg bg-[#2B7A9E] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#246a8a] transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" /> Asignar grupos
+            </button>
           </div>
 
           {grupos.length === 0 ? (
@@ -327,6 +363,64 @@ export default function DocenteDetallePage() {
         )}
 
       </main>
+
+      {/* Modal asignar grupos */}
+      {showAsignar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setShowAsignar(false)}>
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-base font-bold text-[#3D3D3D]">Asignar grupos</h2>
+                <p className="text-xs text-[#aaa] mt-0.5">{profile?.apellido}, {profile?.nombre}</p>
+              </div>
+              <button onClick={() => setShowAsignar(false)} className="p-1 rounded-lg text-[#aaa] hover:text-[#3D3D3D]">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {loadingGrupos ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
+              </div>
+            ) : gruposDisponibles.length === 0 ? (
+              <p className="text-sm text-[#aaa] text-center py-8">No hay grupos activos en el sistema</p>
+            ) : (
+              <div className="overflow-y-auto space-y-2 pr-1">
+                {gruposDisponibles.map(g => {
+                  const esMio = g.docente_id === id
+                  const deOtro = g.docente_id !== null && !esMio
+                  return (
+                    <div
+                      key={g.id}
+                      onClick={() => !deOtro && toggleGrupo(g)}
+                      className={`flex items-center justify-between rounded-xl border px-4 py-3 transition-colors ${
+                        esMio
+                          ? "border-[#2B7A9E] bg-[#2B7A9E]/5 cursor-pointer"
+                          : deOtro
+                          ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                          : "border-gray-200 bg-white hover:border-[#2B7A9E]/40 cursor-pointer"
+                      }`}
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-[#3D3D3D]">{g.nombre}</p>
+                        {g.nivel && <p className="text-xs text-[#aaa]">{g.nivel}</p>}
+                        {deOtro && <p className="text-xs text-amber-600 mt-0.5">Asignado a: {g.docenteNombre}</p>}
+                      </div>
+                      <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        esMio ? "border-[#2B7A9E] bg-[#2B7A9E]" : "border-gray-300"
+                      }`}>
+                        {esMio && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            <p className="text-xs text-[#bbb] mt-4">Los grupos asignados a otro docente no se pueden seleccionar directamente.</p>
+          </div>
+        </div>
+      )}
 
       {/* Modal carga horaria */}
       {editGrupo && (
