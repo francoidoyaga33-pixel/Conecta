@@ -159,7 +159,7 @@ export async function getGruposParaAsignar() {
 
   if (!grupos || grupos.length === 0) return []
 
-  const docenteIds = [...new Set(grupos.map(g => g.docente_id).filter(Boolean))]
+  const docenteIds = Array.from(new Set(grupos.map(g => g.docente_id).filter(Boolean)))
   let docentes: { id: string; nombre: string; apellido: string }[] = []
   if (docenteIds.length > 0) {
     const { data } = await admin
