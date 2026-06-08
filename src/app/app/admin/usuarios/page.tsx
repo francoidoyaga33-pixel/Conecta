@@ -5,7 +5,7 @@ import { TopBar } from "../../_components/TopBar"
 import {
   Plus, Search, UserCheck, UserX,
   Trash2, X, Loader2, Shield, BookOpen,
-  GraduationCap, Users, DollarSign, KeyRound
+  GraduationCap, Users, DollarSign, KeyRound, CreditCard, Mail
 } from "lucide-react"
 import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, changePassword, getMyRole } from "./actions"
 
@@ -85,7 +85,7 @@ export default function UsuariosPage() {
     setPasswordTarget(null)
   }
 
-  async function handleSave(data: { nombre: string; apellido: string; email: string; role: string; password: string }) {
+  async function handleSave(data: { nombre: string; apellido: string; email: string; role: string; password: string; loginMethod: "email" | "dni"; dni?: string }) {
     const result = await createUsuario(data)
     if (result.error) {
       alert("Error: " + result.error)
@@ -180,7 +180,10 @@ export default function UsuariosPage() {
                           </div>
                           <div>
                             <p className="font-medium text-[#3D3D3D]">{user.nombre} {user.apellido}</p>
-                            <p className="text-xs text-[#aaa]">{user.email}</p>
+                            {user.email.endsWith("@dni.conecta.internal")
+                              ? <span className="inline-flex items-center gap-1 text-xs text-[#2B7A9E]"><CreditCard className="h-3 w-3" /> Acceso por DNI</span>
+                              : <p className="text-xs text-[#aaa]">{user.email}</p>
+                            }
                           </div>
                         </div>
                       </td>
@@ -356,9 +359,10 @@ function UserModal({
 }: {
   allowedRoles: Role[]
   onClose: () => void
-  onSave: (data: { nombre: string; apellido: string; email: string; role: string; password: string }) => Promise<void>
+  onSave: (data: { nombre: string; apellido: string; email: string; role: string; password: string; loginMethod: "email" | "dni"; dni?: string }) => Promise<void>
 }) {
-  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", role: allowedRoles[0] ?? "estudiante", password: "" })
+  const [loginMethod, setLoginMethod] = useState<"email" | "dni">("email")
+  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", dni: "", role: allowedRoles[0] ?? "estudiante", password: "" })
   const [loading, setLoading] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -368,7 +372,7 @@ function UserModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await onSave(form)
+    await onSave({ ...form, loginMethod, dni: loginMethod === "dni" ? form.dni : undefined })
     setLoading(false)
   }
 
@@ -383,6 +387,31 @@ function UserModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Toggle método de acceso */}
+          <div>
+            <label className="block text-xs font-semibold text-[#555] mb-1.5">Método de acceso</label>
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              <button
+                type="button"
+                onClick={() => setLoginMethod("email")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  loginMethod === "email" ? "bg-white text-[#2B7A9E] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Mail className="h-3.5 w-3.5" /> Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMethod("dni")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  loginMethod === "dni" ? "bg-white text-[#2B7A9E] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <CreditCard className="h-3.5 w-3.5" /> DNI
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             {[
               { name: "nombre", label: "Nombre", placeholder: "Juan" },
@@ -402,18 +431,35 @@ function UserModal({
             ))}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-[#555] mb-1.5">Email</label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="usuario@ejemplo.com"
-              required
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
-            />
-          </div>
+          {loginMethod === "email" ? (
+            <div>
+              <label className="block text-xs font-semibold text-[#555] mb-1.5">Email</label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="usuario@ejemplo.com"
+                required
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-[#555] mb-1.5">DNI</label>
+              <input
+                name="dni"
+                type="text"
+                inputMode="numeric"
+                value={form.dni}
+                onChange={handleChange}
+                placeholder="Ej: 12345678"
+                required
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+              />
+              <p className="text-xs text-[#aaa] mt-1">El alumno podrá ingresar usando su DNI como usuario.</p>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-[#555] mb-1.5">Rol</label>

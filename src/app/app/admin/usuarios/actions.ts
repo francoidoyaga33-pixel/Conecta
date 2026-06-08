@@ -42,8 +42,9 @@ export async function createUsuario(formData: {
   email: string
   role: string
   password: string
+  loginMethod: "email" | "dni"
+  dni?: string
 }) {
-  // Verificar que el rol asignado sea permitido para quien lo crea
   const myRole = await getMyRole()
   const canCreateAnyRole = myRole === "admin"
   const canOnlyCreateEstudiante = myRole === "docente" || myRole === "financiero"
@@ -55,10 +56,19 @@ export async function createUsuario(formData: {
     return { error: "No tenés permisos para crear usuarios." }
   }
 
+  if (formData.loginMethod === "dni" && !formData.dni) {
+    return { error: "El DNI es obligatorio para este método de acceso." }
+  }
+
   const admin = createAdminClient()
 
+  // Para cuentas DNI se genera un email interno invisible al usuario
+  const email = formData.loginMethod === "dni"
+    ? `${formData.dni}@dni.conecta.internal`
+    : formData.email
+
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email: formData.email,
+    email,
     password: formData.password,
     email_confirm: true,
     user_metadata: {
@@ -76,12 +86,19 @@ export async function createUsuario(formData: {
       id: authData.user.id,
       nombre: formData.nombre,
       apellido: formData.apellido,
-      email: formData.email,
+      email,
       role: formData.role,
       activo: true,
     })
 
   if (profileError) return { error: profileError.message }
+
+  // Si es cuenta DNI, guardar el DNI en el legajo para poder hacer login
+  if (formData.loginMethod === "dni" && formData.dni) {
+    await admin
+      .from("conecta_legajos")
+      .upsert({ id: authData.user.id, dni: formData.dni, updated_at: new Date().toISOString() })
+  }
 
   revalidatePath("/app/admin/usuarios")
   return { error: null }
