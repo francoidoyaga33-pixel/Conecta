@@ -192,14 +192,18 @@ export default function AsistenciaPage() {
   function buildReporteTable() {
     const byAlumno: Record<string, { nombre: string; apellido: string; dias: Record<string, EstadoAsistencia> }> = {}
     const diasSet = new Set<string>()
+    const registradorPorDia: Record<string, string> = {}
 
     reporteData.forEach((r: any) => {
       const alumnoId = r.estudiante_id
-      const nombre = r.conecta_profiles?.nombre ?? "?"
-      const apellido = r.conecta_profiles?.apellido ?? "?"
+      const nombre = r.alumno?.nombre ?? r.conecta_profiles?.nombre ?? "?"
+      const apellido = r.alumno?.apellido ?? r.conecta_profiles?.apellido ?? "?"
       if (!byAlumno[alumnoId]) byAlumno[alumnoId] = { nombre, apellido, dias: {} }
       byAlumno[alumnoId].dias[r.fecha] = r.estado
       diasSet.add(r.fecha)
+      if (r.registrador && !registradorPorDia[r.fecha]) {
+        registradorPorDia[r.fecha] = `${r.registrador.nombre} ${r.registrador.apellido}`
+      }
     })
 
     const dias = Array.from(diasSet).sort()
@@ -207,7 +211,7 @@ export default function AsistenciaPage() {
       a[1].apellido.localeCompare(b[1].apellido)
     )
 
-    return { dias, alumnos }
+    return { dias, alumnos, registradorPorDia }
   }
 
   const colorCelda: Record<EstadoAsistencia, string> = {
@@ -661,7 +665,7 @@ export default function AsistenciaPage() {
                 <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
               </div>
             ) : (() => {
-              const { dias, alumnos } = buildReporteTable()
+              const { dias, alumnos, registradorPorDia } = buildReporteTable()
               if (alumnos.length === 0) {
                 return (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -720,6 +724,23 @@ export default function AsistenciaPage() {
                           </tr>
                         )
                       })}
+                      <tr className="border-t border-gray-200 bg-gray-50">
+                        <td className="px-4 py-2 text-[10px] font-semibold text-[#888] uppercase tracking-wider sticky left-0 bg-gray-50">
+                          Registrado por
+                        </td>
+                        {dias.map((d) => (
+                          <td key={d} className="px-1 py-2 text-center">
+                            {registradorPorDia[d] ? (
+                              <span className="text-[9px] text-[#2B7A9E] font-medium leading-tight block" title={registradorPorDia[d]}>
+                                {registradorPorDia[d].split(" ")[0]}
+                              </span>
+                            ) : (
+                              <span className="text-[#ddd]">—</span>
+                            )}
+                          </td>
+                        ))}
+                        <td />
+                      </tr>
                     </tbody>
                   </table>
 

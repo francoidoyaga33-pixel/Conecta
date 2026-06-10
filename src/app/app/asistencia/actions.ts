@@ -81,6 +81,7 @@ export async function guardarAsistencia(
     estudiante_id: r.alumno_id,
     fecha,
     estado: r.estado,
+    registrado_por: profile.id,
   }))
 
   const { error } = await admin.from("conecta_asistencia").insert(rows)
@@ -152,7 +153,7 @@ export async function getReporteMensual(grupoId: string, anio: number, mes: numb
 
   const { data } = await admin
     .from("conecta_asistencia")
-    .select("estudiante_id, fecha, estado, conecta_profiles!estudiante_id(nombre, apellido)")
+    .select("estudiante_id, fecha, estado, registrado_por, alumno:conecta_profiles!estudiante_id(nombre, apellido), registrador:conecta_profiles!registrado_por(nombre, apellido)")
     .eq("grupo_id", grupoId)
     .gte("fecha", primerDia)
     .lte("fecha", ultimoDiaStr)
