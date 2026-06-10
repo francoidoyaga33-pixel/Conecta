@@ -82,6 +82,17 @@ export async function guardarLegajo(alumnoId: string, data: {
   return { error: null }
 }
 
+export async function actualizarAvatarUrl(alumnoId: string, avatarUrl: string) {
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from("conecta_profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", alumnoId)
+  if (error) return { error: error.message }
+  revalidatePath(`/app/admin/alumnos/${alumnoId}`)
+  return { error: null }
+}
+
 export async function getGrupos() {
   const admin = createAdminClient()
   const { data } = await admin

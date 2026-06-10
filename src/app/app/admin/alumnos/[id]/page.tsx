@@ -7,12 +7,13 @@ import { TopBar } from "../../../_components/TopBar"
 import {
   ChevronLeft, Loader2, Save, CheckCircle2, Plus, X,
   User, Heart, Users, BookOpen, AlertCircle, UserCheck, UserX,
-  Pencil, Trash2, GraduationCap,
+  Pencil, Trash2, GraduationCap, Camera,
 } from "lucide-react"
 import {
   getAlumnoConLegajo, guardarLegajo, getGrupos,
-  crearMatricula, actualizarEstadoMatricula, eliminarMatricula,
+  crearMatricula, actualizarEstadoMatricula, eliminarMatricula, actualizarAvatarUrl,
 } from "../actions"
+import { createClient } from "@/lib/supabase/client"
 
 interface Profile { id: string; nombre: string; apellido: string; email: string; activo: boolean; created_at: string; avatar_url: string | null }
 interface Legajo {
@@ -96,10 +97,35 @@ export default function LegajoPage() {
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
   // Modal matrícula
   const [showMatModal, setShowMatModal] = useState(false)
   const [matForm, setMatForm] = useState({ grupo_id: "", estado: "habilitado", ciclo_lectivo: new Date().getFullYear(), fecha_inicio: new Date().toISOString().slice(0, 10), observaciones: "" })
   const [editMatricula, setEditMatricula] = useState<Matricula | null>(null)
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingAvatar(true)
+    const supabase = createClient()
+    const ext = file.name.split(".").pop()
+    const path = `students/${id}/avatar.${ext}`
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true })
+    if (uploadError) {
+      alert("Error al subir imagen: " + uploadError.message)
+      setUploadingAvatar(false)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path)
+    const result = await actualizarAvatarUrl(id, publicUrl)
+    if (result.error) alert("Error: " + result.error)
+    else await loadData()
+    setUploadingAvatar(false)
+    e.target.value = ""
+  }
 
   async function loadData() {
     const [data, gs] = await Promise.all([
@@ -233,11 +259,27 @@ export default function LegajoPage() {
 
         {/* Header alumno */}
         <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4">
-          <div className="h-14 w-14 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-xl font-black text-[#2B7A9E] shrink-0 overflow-hidden">
-            {profile.avatar_url
-              ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-              : initials}
-          </div>
+          <label className="relative h-14 w-14 rounded-full shrink-0 cursor-pointer group">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+              disabled={uploadingAvatar}
+            />
+            <div className="h-14 w-14 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-xl font-black text-[#2B7A9E] overflow-hidden">
+              {uploadingAvatar
+                ? <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
+                : profile.avatar_url
+                ? <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                : initials}
+            </div>
+            {!uploadingAvatar && (
+              <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="h-5 w-5 text-white" />
+              </div>
+            )}
+          </label>
           <div className="flex-1 min-w-0">
             <p className="text-lg font-black text-[#3D3D3D]">{profile.apellido}, {profile.nombre}</p>
             <p className="text-sm text-[#aaa]">{profile.email}</p>
