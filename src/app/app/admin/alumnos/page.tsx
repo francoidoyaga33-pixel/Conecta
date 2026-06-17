@@ -38,6 +38,7 @@ export default function AlumnosPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filtroEstado, setFiltroEstado] = useState<string>("todos")
+  const [filtroCurso, setFiltroCurso] = useState<string>("todos")
 
   useEffect(() => {
     Promise.all([getAlumnos(), getMatriculasConEstado()]).then(([a, m]) => {
@@ -58,15 +59,24 @@ export default function AlumnosPage() {
     return m?.conecta_grupos?.nombre ?? null
   }
 
+  const cursosUnicos = Array.from(
+    new Set(matriculas.map(m => m.conecta_grupos?.nombre).filter(Boolean))
+  ).sort() as string[]
+
   const filtered = alumnos.filter(a => {
     const matchSearch = `${a.nombre} ${a.apellido} ${a.email}`
       .toLowerCase().includes(search.toLowerCase())
     const estado = getEstadoAlumno(a.id)
+    const grupo = getGrupoAlumno(a.id)
     const matchEstado =
       filtroEstado === "todos" ? true :
       filtroEstado === "sin_matricula" ? !estado :
       estado === filtroEstado
-    return matchSearch && matchEstado
+    const matchCurso =
+      filtroCurso === "todos" ? true :
+      filtroCurso === "sin_curso" ? !grupo :
+      grupo === filtroCurso
+    return matchSearch && matchEstado && matchCurso
   })
 
   const stats = {
@@ -120,6 +130,15 @@ export default function AlumnosPage() {
             <option value="inactivo">Inactivo</option>
             <option value="sin_matricula">Sin matrícula</option>
           </select>
+          <select
+            value={filtroCurso}
+            onChange={e => setFiltroCurso(e.target.value)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20"
+          >
+            <option value="todos">Todos los cursos</option>
+            <option value="sin_curso">Sin curso</option>
+            {cursosUnicos.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
 
         {/* Tabla */}
@@ -162,7 +181,10 @@ export default function AlumnosPage() {
                           </div>
                           <div>
                             <p className="font-medium text-[#3D3D3D]">{alumno.apellido}, {alumno.nombre}</p>
-                            <p className="text-xs text-[#aaa]">{alumno.email}</p>
+                            {alumno.email.includes("@dni.conecta")
+                              ? <p className="text-xs text-[#2B7A9E]">DNI: {alumno.email.split("@")[0]}</p>
+                              : <p className="text-xs text-[#aaa]">{alumno.email}</p>
+                            }
                           </div>
                         </div>
                       </td>
