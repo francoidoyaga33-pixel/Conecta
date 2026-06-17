@@ -67,8 +67,7 @@ export default async function DashboardPage() {
       admin.from("conecta_interesados").select("estado_venta"),
       // Últimas matrículas
       admin.from("conecta_matriculas")
-        .select("estado, created_at, conecta_profiles!alumno_id(nombre, apellido), conecta_grupos(nombre)")
-        .eq("ciclo_lectivo", cicloActual)
+        .select("alumno_id, grupo_id, estado, created_at")
         .order("created_at", { ascending: false })
         .limit(5),
     ])
@@ -100,13 +99,33 @@ export default async function DashboardPage() {
     })
     pipelineInteresados = Object.entries(estadoVentas).map(([estado, count]) => ({ estado, count }))
 
-    ultimasMatriculas = ((ultimasRes.data ?? []) as any[]).map((m: any) => ({
-      nombre: m.conecta_profiles?.nombre ?? "",
-      apellido: m.conecta_profiles?.apellido ?? "",
-      grupo: m.conecta_grupos?.nombre ?? "—",
-      fecha: m.created_at,
-      estado: m.estado,
-    }))
+    const ultimasRaw = (ultimasRes.data ?? []) as any[]
+    if (ultimasRaw.length > 0) {
+      const alumnoIds = ultimasRaw.map((m: any) => m.alumno_id).filter(Boolean)
+      const grupoIds = ultimasRaw.map((m: any) => m.grupo_id).filter(Boolean)
+
+      const [perfilesRes, gruposRes2] = await Promise.all([
+        alumnoIds.length > 0
+          ? admin.from("conecta_profiles").select("id, nombre, apellido").in("id", alumnoIds)
+          : Promise.resolve({ data: [] }),
+        grupoIds.length > 0
+          ? admin.from("conecta_grupos").select("id, nombre").in("id", grupoIds)
+          : Promise.resolve({ data: [] }),
+      ])
+
+      const perfilesMap: Record<string, { nombre: string; apellido: string }> = {}
+      ;(perfilesRes.data ?? []).forEach((p: any) => { perfilesMap[p.id] = p })
+      const gruposMap: Record<string, string> = {}
+      ;(gruposRes2.data ?? []).forEach((g: any) => { gruposMap[g.id] = g.nombre })
+
+      ultimasMatriculas = ultimasRaw.map((m: any) => ({
+        nombre: perfilesMap[m.alumno_id]?.nombre ?? "",
+        apellido: perfilesMap[m.alumno_id]?.apellido ?? "",
+        grupo: gruposMap[m.grupo_id] ?? "—",
+        fecha: m.created_at,
+        estado: m.estado,
+      }))
+    }
   }
 
   // ── Datos para docente ──
