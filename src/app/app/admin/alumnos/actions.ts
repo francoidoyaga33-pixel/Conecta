@@ -114,6 +114,7 @@ export async function crearMatricula(payload: {
   const { error } = await admin.from("conecta_matriculas").insert(payload)
   if (error) return { error: error.message }
   revalidatePath(`/app/admin/alumnos/${payload.alumno_id}`)
+  revalidatePath("/app/dashboard")
   return { error: null }
 }
 

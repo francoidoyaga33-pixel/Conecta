@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { TopBar } from "../_components/TopBar"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
