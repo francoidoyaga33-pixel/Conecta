@@ -361,8 +361,10 @@ function UserModal({
   onClose: () => void
   onSave: (data: { nombre: string; apellido: string; email: string; role: string; password: string; loginMethod: "email" | "dni"; dni?: string }) => Promise<void>
 }) {
+  const DOMINIOS = ["@gmail.com", "@outlook.com", "@hotmail.com", "@yahoo.com", "@icloud.com", "@live.com"]
+
   const [loginMethod, setLoginMethod] = useState<"email" | "dni">("email")
-  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", dni: "", role: allowedRoles[0] ?? "estudiante", password: "" })
+  const [form, setForm] = useState({ nombre: "", apellido: "", emailLocal: "", emailDomain: "@gmail.com", emailCustom: "", dni: "", role: allowedRoles[0] ?? "estudiante", password: "" })
   const [loading, setLoading] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -372,7 +374,9 @@ function UserModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await onSave({ ...form, loginMethod, dni: loginMethod === "dni" ? form.dni : undefined })
+    const domain = form.emailDomain === "custom" ? form.emailCustom : form.emailDomain
+    const email = `${form.emailLocal}${domain}`
+    await onSave({ ...form, email, loginMethod, dni: loginMethod === "dni" ? form.dni : undefined })
     setLoading(false)
   }
 
@@ -434,15 +438,42 @@ function UserModal({
           {loginMethod === "email" ? (
             <div>
               <label className="block text-xs font-semibold text-[#555] mb-1.5">Email</label>
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="usuario@ejemplo.com"
-                required
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
-              />
+              <div className="flex gap-1.5">
+                <input
+                  name="emailLocal"
+                  type="text"
+                  value={form.emailLocal}
+                  onChange={handleChange}
+                  placeholder="usuario"
+                  required
+                  className="flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+                />
+                <select
+                  name="emailDomain"
+                  value={form.emailDomain}
+                  onChange={handleChange}
+                  className="rounded-lg border border-gray-200 px-2 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] bg-white"
+                >
+                  {DOMINIOS.map(d => <option key={d} value={d}>{d}</option>)}
+                  <option value="custom">Otro...</option>
+                </select>
+              </div>
+              {form.emailDomain === "custom" && (
+                <input
+                  name="emailCustom"
+                  type="text"
+                  value={form.emailCustom}
+                  onChange={handleChange}
+                  placeholder="@miempresa.com"
+                  required
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E] transition-colors"
+                />
+              )}
+              {form.emailLocal && (
+                <p className="text-xs text-[#aaa] mt-1">
+                  {form.emailLocal}{form.emailDomain === "custom" ? form.emailCustom : form.emailDomain}
+                </p>
+              )}
             </div>
           ) : (
             <div>
