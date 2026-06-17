@@ -180,8 +180,8 @@ export default function UsuariosPage() {
                           </div>
                           <div>
                             <p className="font-medium text-[#3D3D3D]">{user.nombre} {user.apellido}</p>
-                            {user.email.endsWith("@dni.conecta.internal")
-                              ? <span className="inline-flex items-center gap-1 text-xs text-[#2B7A9E]"><CreditCard className="h-3 w-3" /> Acceso por DNI</span>
+                            {user.email.includes("@dni.conecta")
+                              ? <span className="inline-flex items-center gap-1 text-xs text-[#2B7A9E]"><CreditCard className="h-3 w-3" /> DNI: {user.email.split("@")[0]}</span>
                               : <p className="text-xs text-[#aaa]">{user.email}</p>
                             }
                           </div>
