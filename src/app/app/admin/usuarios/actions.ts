@@ -124,7 +124,20 @@ export async function changePassword(userId: string, newPassword: string) {
 }
 
 export async function deleteUsuario(userId: string) {
+  const myRole = await getMyRole()
+  if (myRole !== "admin") return { error: "Solo los administradores pueden eliminar usuarios." }
+
+  const supabase = await createClient()
+  const { data: { user: me } } = await supabase.auth.getUser()
+
   const admin = createAdminClient()
+
+  // Guardar datos del usuario antes de eliminarlo
+  const { data: target } = await admin
+    .from("conecta_profiles")
+    .select("nombre, apellido, email, role")
+    .eq("id", userId)
+    .single()
 
   const { error: profileError } = await admin
     .from("conecta_profiles")
@@ -136,6 +149,31 @@ export async function deleteUsuario(userId: string) {
   const { error: authError } = await admin.auth.admin.deleteUser(userId)
   if (authError) return { error: authError.message }
 
+  // Registrar en auditoría
+  if (me && target) {
+    const descripcion = target.email.includes("@dni.conecta")
+      ? `Eliminó al usuario ${target.nombre} ${target.apellido} (DNI: ${target.email.split("@")[0]}) — Rol: ${target.role}`
+      : `Eliminó al usuario ${target.nombre} ${target.apellido} (${target.email}) — Rol: ${target.role}`
+    await admin.from("conecta_audit_log").insert({
+      accion: "ELIMINAR_USUARIO",
+      descripcion,
+      realizado_por: me.id,
+    })
+  }
+
   revalidatePath("/app/admin/usuarios")
   return { error: null }
+}
+
+export async function getAuditLog() {
+  const myRole = await getMyRole()
+  if (myRole !== "admin") return []
+
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from("conecta_audit_log")
+    .select("id, accion, descripcion, created_at, realizado_por, conecta_profiles!realizado_por(nombre, apellido)")
+    .order("created_at", { ascending: false })
+    .limit(50)
+  return data ?? []
 }

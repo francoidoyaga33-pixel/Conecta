@@ -5,9 +5,9 @@ import { TopBar } from "../../_components/TopBar"
 import {
   Plus, Search, UserCheck, UserX,
   Trash2, X, Loader2, Shield, BookOpen,
-  GraduationCap, Users, DollarSign, KeyRound, CreditCard, Mail
+  GraduationCap, Users, DollarSign, KeyRound, CreditCard, Mail, ClipboardList
 } from "lucide-react"
-import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, changePassword, getMyRole } from "./actions"
+import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, changePassword, getMyRole, getAuditLog } from "./actions"
 
 type Role = "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
 
@@ -38,6 +38,8 @@ export default function UsuariosPage() {
   const [showModal, setShowModal] = useState(false)
   const [passwordTarget, setPasswordTarget] = useState<ConectaUser | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [auditLog, setAuditLog] = useState<any[]>([])
+  const [showAudit, setShowAudit] = useState(false)
 
   const isAdmin = myRole === "admin"
   const allowedRoles = isAdmin
@@ -49,6 +51,10 @@ export default function UsuariosPage() {
     const [{ users }, role] = await Promise.all([getUsuarios(), getMyRole()])
     setUsers(users as ConectaUser[])
     setMyRole(role)
+    if (role === "admin") {
+      const log = await getAuditLog()
+      setAuditLog(log as any[])
+    }
     setLoading(false)
   }
 
@@ -245,6 +251,52 @@ export default function UsuariosPage() {
           <p className="text-xs text-[#aaa]">
             {filtered.length} de {users.length} usuario{users.length !== 1 ? "s" : ""}
           </p>
+        )}
+
+        {/* Registro de auditoría — solo admins */}
+        {isAdmin && (
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <button
+              onClick={() => setShowAudit(v => !v)}
+              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-[#2B7A9E]" />
+                <span className="text-sm font-bold text-[#3D3D3D]">Registro de actividad</span>
+                {auditLog.length > 0 && (
+                  <span className="text-xs bg-red-50 text-red-600 font-semibold px-2 py-0.5 rounded-full">{auditLog.length}</span>
+                )}
+              </div>
+              <span className="text-xs text-[#aaa]">{showAudit ? "Ocultar" : "Ver"}</span>
+            </button>
+
+            {showAudit && (
+              auditLog.length === 0 ? (
+                <p className="text-sm text-[#aaa] text-center py-8 border-t border-gray-100">Sin registros de actividad</p>
+              ) : (
+                <div className="border-t border-gray-100 divide-y divide-gray-50">
+                  {auditLog.map((entry: any) => {
+                    const quien = entry.conecta_profiles
+                      ? `${entry.conecta_profiles.nombre} ${entry.conecta_profiles.apellido}`
+                      : "Desconocido"
+                    return (
+                      <div key={entry.id} className="px-5 py-3 flex items-start gap-3">
+                        <div className="h-7 w-7 rounded-full bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
+                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[#3D3D3D]">{entry.descripcion}</p>
+                          <p className="text-xs text-[#aaa] mt-0.5">
+                            Por <span className="font-medium">{quien}</span> · {new Date(entry.created_at).toLocaleString("es-AR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            )}
+          </div>
         )}
       </main>
 
