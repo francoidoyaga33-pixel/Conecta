@@ -23,7 +23,8 @@ export async function getGrupos() {
   const admin = createAdminClient()
   let query = admin
     .from("conecta_grupos")
-    .select("id, nombre, nivel, docente_id")
+    .select("id, nombre, materia, nivel, docente_id")
+    .order("materia")
     .order("nombre")
 
   if (profile.role === "docente") {

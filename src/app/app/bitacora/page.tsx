@@ -12,7 +12,14 @@ import {
   actualizarEntrada, eliminarEntrada, getMyProfile
 } from "./actions"
 
-interface Grupo { id: string; nombre: string; nivel: string }
+interface Grupo { id: string; nombre: string; materia: string | null; nivel: string | null }
+
+function labelGrupo(g: Grupo) {
+  let label = g.nombre
+  if (g.materia && g.materia !== g.nombre) label += ` · ${g.materia}`
+  if (g.nivel) label += ` · ${g.nivel}`
+  return label
+}
 interface Entrada {
   id: string
   fecha: string
@@ -387,7 +394,7 @@ export default function BitacoraPage() {
               >
                 {grupos.length === 0 && <option value="">Sin grupos</option>}
                 {grupos.map((g) => (
-                  <option key={g.id} value={g.id}>{g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}</option>
+                  <option key={g.id} value={g.id}>{labelGrupo(g)}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />

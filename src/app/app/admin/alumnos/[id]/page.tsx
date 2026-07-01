@@ -29,7 +29,14 @@ interface Matricula {
   fecha_inicio: string | null; fecha_fin: string | null; observaciones: string | null
   conecta_grupos: { id: string; nombre: string; nivel: string } | null
 }
-interface Grupo { id: string; nombre: string; nivel: string }
+interface Grupo { id: string; nombre: string; materia: string | null; nivel: string | null }
+
+function labelGrupo(g: Grupo) {
+  let label = g.nombre
+  if (g.materia && g.materia !== g.nombre) label += ` · ${g.materia}`
+  if (g.nivel) label += ` · ${g.nivel}`
+  return label
+}
 
 const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   habilitado: { label: "Habilitado", color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200", icon: UserCheck },
@@ -463,7 +470,7 @@ export default function LegajoPage() {
                   <label className="block text-xs font-semibold text-[#555] mb-1.5">Curso / Grupo</label>
                   <select name="grupo_id" value={matForm.grupo_id} onChange={handleMatChange}
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20">
-                    {grupos.map(g => <option key={g.id} value={g.id}>{g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}</option>)}
+                    {grupos.map(g => <option key={g.id} value={g.id}>{labelGrupo(g)}</option>)}
                   </select>
                 </div>
               )}

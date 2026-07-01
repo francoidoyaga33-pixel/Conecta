@@ -20,7 +20,8 @@ export async function getGrupos() {
   const admin = createAdminClient()
   const { data } = await admin
     .from("conecta_grupos")
-    .select("id, nombre, nivel")
+    .select("id, nombre, materia, nivel")
+    .order("materia")
     .order("nombre")
   return data ?? []
 }

@@ -14,7 +14,14 @@ import {
 
 type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
 
-interface Grupo { id: string; nombre: string; nivel: string; docente_id: string | null }
+interface Grupo { id: string; nombre: string; materia: string | null; nivel: string | null; docente_id: string | null }
+
+function labelGrupo(g: { nombre: string; materia?: string | null; nivel?: string | null }) {
+  let label = g.nombre
+  if (g.materia && g.materia !== g.nombre) label += ` · ${g.materia}`
+  if (g.nivel) label += ` · ${g.nivel}`
+  return label
+}
 interface Estudiante { id: string; nombre: string; apellido: string; email: string }
 interface RegistroAsistencia { estudiante_id: string; estado: EstadoAsistencia }
 interface Docente { id: string; nombre: string; apellido: string; avatar_url: string | null }
@@ -361,7 +368,7 @@ export default function AsistenciaPage() {
                                   <option value="">— Seleccionar curso —</option>
                                   {grupos.map((g) => (
                                     <option key={g.id} value={g.nombre}>
-                                      {g.nombre}{g.nivel ? ` · ${g.nivel}` : ""}
+                                      {labelGrupo(g)}
                                     </option>
                                   ))}
                                 </select>
@@ -485,7 +492,7 @@ export default function AsistenciaPage() {
               >
                 {grupos.length === 0 && <option value="">Sin grupos</option>}
                 {grupos.map((g) => (
-                  <option key={g.id} value={g.id}>{g.nombre} {g.nivel ? `· ${g.nivel}` : ""}</option>
+                  <option key={g.id} value={g.id}>{labelGrupo(g)}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />

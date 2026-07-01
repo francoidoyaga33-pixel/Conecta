@@ -23,7 +23,15 @@ interface Matricula {
   alumno_id: string
   estado: string
   ciclo_lectivo: number
-  conecta_grupos: { nombre: string } | null
+  conecta_grupos: { nombre: string; materia: string | null; nivel: string | null } | null
+}
+
+function labelGrupo(g: { nombre: string; materia?: string | null; nivel?: string | null } | null) {
+  if (!g) return null
+  let label = g.nombre
+  if (g.materia && g.materia !== g.nombre) label += ` · ${g.materia}`
+  if (g.nivel) label += ` · ${g.nivel}`
+  return label
 }
 
 const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -56,11 +64,11 @@ export default function AlumnosPage() {
 
   function getGrupoAlumno(alumnoId: string) {
     const m = matriculas.find(m => m.alumno_id === alumnoId)
-    return m?.conecta_grupos?.nombre ?? null
+    return m ? labelGrupo(m.conecta_grupos) : null
   }
 
   const cursosUnicos = Array.from(
-    new Set(matriculas.map(m => m.conecta_grupos?.nombre).filter(Boolean))
+    new Set(matriculas.map(m => labelGrupo(m.conecta_grupos)).filter(Boolean))
   ).sort() as string[]
 
   const filtered = alumnos.filter(a => {

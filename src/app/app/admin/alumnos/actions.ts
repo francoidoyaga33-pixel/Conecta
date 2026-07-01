@@ -97,7 +97,8 @@ export async function getGrupos() {
   const admin = createAdminClient()
   const { data } = await admin
     .from("conecta_grupos")
-    .select("id, nombre, nivel")
+    .select("id, nombre, materia, nivel")
+    .order("materia")
     .order("nombre")
   return data ?? []
 }
@@ -141,7 +142,7 @@ export async function getMatriculasConEstado() {
   const admin = createAdminClient()
   const { data } = await admin
     .from("conecta_matriculas")
-    .select("alumno_id, estado, ciclo_lectivo, conecta_grupos(nombre)")
+    .select("alumno_id, estado, ciclo_lectivo, conecta_grupos(nombre, materia, nivel)")
     .eq("ciclo_lectivo", new Date().getFullYear())
   return data ?? []
 }

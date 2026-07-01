@@ -18,8 +18,15 @@ interface GrupoMetrica {
   horasSemanales: number; cargaId: string | null
 }
 interface GrupoAsignable {
-  id: string; nombre: string; nivel: string
+  id: string; nombre: string; materia: string | null; nivel: string | null
   docente_id: string | null; docenteNombre: string | null
+}
+
+function labelGrupo(g: { nombre: string; materia?: string | null; nivel?: string | null }) {
+  let label = g.nombre
+  if (g.materia && g.materia !== g.nombre) label += ` · ${g.materia}`
+  if (g.nivel) label += ` · ${g.nivel}`
+  return label
 }
 interface Pago {
   id: string; periodo: string; horas_contratadas: number; horas_dictadas: number
@@ -402,7 +409,7 @@ export default function DocenteDetallePage() {
                       }`}
                     >
                       <div>
-                        <p className="text-sm font-semibold text-[#3D3D3D]">{g.nombre}</p>
+                        <p className="text-sm font-semibold text-[#3D3D3D]">{labelGrupo(g)}</p>
                         {g.nivel && <p className="text-xs text-[#aaa]">{g.nivel}</p>}
                         {deOtro && <p className="text-xs text-amber-600 mt-0.5">Asignado a: {g.docenteNombre}</p>}
                       </div>
