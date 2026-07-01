@@ -100,6 +100,20 @@ export async function createUsuario(formData: {
       .upsert({ id: authData.user.id, dni: formData.dni, updated_at: new Date().toISOString() })
   }
 
+  // Registrar en auditoría
+  const supabase = await createClient()
+  const { data: { user: me } } = await supabase.auth.getUser()
+  if (me) {
+    const descripcion = formData.loginMethod === "dni"
+      ? `Creó al usuario ${formData.nombre} ${formData.apellido} (DNI: ${formData.dni}) — Rol: ${formData.role}`
+      : `Creó al usuario ${formData.nombre} ${formData.apellido} (${formData.email}) — Rol: ${formData.role}`
+    await admin.from("conecta_audit_log").insert({
+      accion: "CREAR_USUARIO",
+      descripcion,
+      realizado_por: me.id,
+    })
+  }
+
   revalidatePath("/app/admin/usuarios")
   return { error: null }
 }

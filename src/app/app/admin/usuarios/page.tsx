@@ -281,8 +281,10 @@ export default function UsuariosPage() {
                       : "Desconocido"
                     return (
                       <div key={entry.id} className="px-5 py-3 flex items-start gap-3">
-                        <div className="h-7 w-7 rounded-full bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${entry.accion === "CREAR_USUARIO" ? "bg-emerald-50" : "bg-red-50"}`}>
+                          {entry.accion === "CREAR_USUARIO"
+                            ? <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                            : <Trash2 className="h-3.5 w-3.5 text-red-500" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-[#3D3D3D]">{entry.descripcion}</p>
