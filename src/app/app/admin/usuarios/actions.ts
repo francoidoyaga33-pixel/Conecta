@@ -184,10 +184,24 @@ export async function getAuditLog() {
   if (myRole !== "admin") return []
 
   const admin = createAdminClient()
-  const { data } = await admin
+  const { data: logs } = await admin
     .from("conecta_audit_log")
-    .select("id, accion, descripcion, created_at, realizado_por, conecta_profiles!realizado_por(nombre, apellido)")
+    .select("id, accion, descripcion, created_at, realizado_por")
     .order("created_at", { ascending: false })
     .limit(50)
-  return data ?? []
+
+  if (!logs || logs.length === 0) return []
+
+  const autorIds = Array.from(new Set(logs.map(l => l.realizado_por).filter(Boolean)))
+  const { data: perfiles } = autorIds.length > 0
+    ? await admin.from("conecta_profiles").select("id, nombre, apellido").in("id", autorIds)
+    : { data: [] }
+
+  const perfilesMap: Record<string, { nombre: string; apellido: string }> = {}
+  ;(perfiles ?? []).forEach((p: any) => { perfilesMap[p.id] = p })
+
+  return logs.map(l => ({
+    ...l,
+    autor: l.realizado_por ? perfilesMap[l.realizado_por] ?? null : null,
+  }))
 }

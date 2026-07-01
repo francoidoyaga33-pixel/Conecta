@@ -276,8 +276,8 @@ export default function UsuariosPage() {
               ) : (
                 <div className="border-t border-gray-100 divide-y divide-gray-50">
                   {auditLog.map((entry: any) => {
-                    const quien = entry.conecta_profiles
-                      ? `${entry.conecta_profiles.nombre} ${entry.conecta_profiles.apellido}`
+                    const quien = entry.autor
+                      ? `${entry.autor.nombre} ${entry.autor.apellido}`
                       : "Desconocido"
                     return (
                       <div key={entry.id} className="px-5 py-3 flex items-start gap-3">
