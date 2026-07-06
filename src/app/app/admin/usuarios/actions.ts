@@ -174,8 +174,10 @@ export async function deleteUsuario(userId: string) {
     // Asistencia de alumnos (columna real: estudiante_id, no alumno_id)
     admin.from("conecta_asistencia").delete().eq("estudiante_id", userId),
     admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId),
-    // Asistencia de docentes
+    // Tablas exclusivas de docentes
     admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId),
+    admin.from("conecta_carga_horaria").delete().eq("docente_id", userId),
+    admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId),
     // Avisos y bitácora creados por el usuario
     admin.from("conecta_avisos").delete().eq("user_id", userId),
     admin.from("conecta_bitacora").delete().eq("docente_id", userId),
