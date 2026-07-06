@@ -138,7 +138,13 @@ export async function changePassword(userId: string, newPassword: string) {
 }
 
 export async function deleteUsuario(userId: string) {
+  // TEST TEMPORAL — confirmar que el server action llega al cliente
   const myRole = await getMyRole()
+  const admin2 = createAdminClient()
+  const { data: testTarget } = await admin2.from("conecta_profiles").select("role").eq("id", userId).single()
+  return { error: `DIAGNÓSTICO: myRole=${myRole} | targetRole=${testTarget?.role ?? "no encontrado"} | userId=${userId.slice(0,8)}` }
+  // eslint-disable-next-line no-unreachable
+  const _myRole = myRole
 
   const admin = createAdminClient()
 
