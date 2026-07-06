@@ -166,37 +166,42 @@ export async function deleteUsuario(userId: string) {
   const supabase = await createClient()
   const { data: { user: me } } = await supabase.auth.getUser()
 
-  // Limpiar todos los registros relacionados para evitar FK violations
-  await Promise.all([
-    // Legajo y matrículas
-    admin.from("conecta_legajos").delete().eq("id", userId),
-    admin.from("conecta_matriculas").delete().eq("alumno_id", userId),
-    // Asistencia de alumnos (columna real: estudiante_id, no alumno_id)
-    admin.from("conecta_asistencia").delete().eq("estudiante_id", userId),
-    admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId),
-    // Tablas exclusivas de docentes
-    admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId),
-    admin.from("conecta_carga_horaria").delete().eq("docente_id", userId),
-    admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId),
-    // Avisos y bitácora creados por el usuario
-    admin.from("conecta_avisos").delete().eq("user_id", userId),
-    admin.from("conecta_bitacora").delete().eq("docente_id", userId),
-    // Mensajes y conversaciones
-    admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId),
-    admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId),
-    // Grupos, horarios y eventos: preservar historial poniendo null
-    admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId),
-    admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId),
-    admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId),
-    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId),
-  ])
+  // Limpiar registros relacionados uno por uno para detectar cuál falla
+  const cleanups: { tabla: string; result: { error: any } }[] = []
+
+  const run = async (tabla: string, op: Promise<{ error: any }>) => {
+    const result = await op
+    if (result.error) cleanups.push({ tabla, result })
+  }
+
+  await run("legajos",                     admin.from("conecta_legajos").delete().eq("id", userId))
+  await run("matriculas",                  admin.from("conecta_matriculas").delete().eq("alumno_id", userId))
+  await run("asistencia(estudiante_id)",   admin.from("conecta_asistencia").delete().eq("estudiante_id", userId))
+  await run("asistencia(registrado_por)",  admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId))
+  await run("asistencia_docentes",         admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId))
+  await run("carga_horaria",               admin.from("conecta_carga_horaria").delete().eq("docente_id", userId))
+  await run("pagos_docentes",              admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId))
+  await run("avisos",                      admin.from("conecta_avisos").delete().eq("user_id", userId))
+  await run("bitacora",                    admin.from("conecta_bitacora").delete().eq("docente_id", userId))
+  await run("mensajes(autor_id)",          admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId))
+  await run("conversacion_participantes",  admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId))
+  await run("grupos(docente_id)",          admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId))
+  await run("horarios(docente_id)",        admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId))
+  await run("eventos(autor_id)",           admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId))
+  await run("audit_log(realizado_por)",    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId))
+
+  if (cleanups.length > 0) {
+    const detalle = cleanups.map(c => `${c.tabla}: ${c.result.error?.message}`).join(" | ")
+    console.error("[deleteUsuario] Cleanup errors:", detalle)
+    return { error: `Error limpiando datos relacionados → ${detalle}` }
+  }
 
   const { error: profileError } = await admin
     .from("conecta_profiles")
     .delete()
     .eq("id", userId)
 
-  if (profileError) return { error: profileError.message }
+  if (profileError) return { error: `Error eliminando perfil: ${profileError.message}` }
 
   const { error: authError } = await admin.auth.admin.deleteUser(userId)
   if (authError) return { error: authError.message }
