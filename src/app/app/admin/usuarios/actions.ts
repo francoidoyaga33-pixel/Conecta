@@ -168,14 +168,21 @@ export async function deleteUsuario(userId: string) {
 
   // Limpiar todos los registros relacionados para evitar FK violations
   await Promise.all([
-    // Tablas con delete directo
+    // Legajo y matrículas
     admin.from("conecta_legajos").delete().eq("id", userId),
-    admin.from("conecta_asistencia").delete().eq("alumno_id", userId),
     admin.from("conecta_matriculas").delete().eq("alumno_id", userId),
+    // Asistencia de alumnos (columna real: estudiante_id, no alumno_id)
+    admin.from("conecta_asistencia").delete().eq("estudiante_id", userId),
+    admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId),
+    // Asistencia de docentes
+    admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId),
+    // Avisos y bitácora creados por el usuario
     admin.from("conecta_avisos").delete().eq("user_id", userId),
     admin.from("conecta_bitacora").delete().eq("docente_id", userId),
+    // Mensajes y conversaciones
+    admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId),
     admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId),
-    // Tablas donde se pone null para preservar el historial
+    // Grupos, horarios y eventos: preservar historial poniendo null
     admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId),
     admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId),
     admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId),
