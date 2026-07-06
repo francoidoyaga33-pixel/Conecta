@@ -146,12 +146,18 @@ export async function deleteUsuario(userId: string) {
 
   const admin = createAdminClient()
 
-  // Guardar datos del usuario antes de eliminarlo
+  // Guardar datos del usuario antes de eliminar
   const { data: target } = await admin
     .from("conecta_profiles")
     .select("nombre, apellido, email, role")
     .eq("id", userId)
     .single()
+
+  // Eliminar registros relacionados para evitar FK violations
+  await admin.from("conecta_legajos").delete().eq("id", userId)
+  await admin.from("conecta_asistencia").delete().eq("alumno_id", userId)
+  await admin.from("conecta_matriculas").delete().eq("alumno_id", userId)
+  await admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId)
 
   const { error: profileError } = await admin
     .from("conecta_profiles")

@@ -77,7 +77,11 @@ export default function UsuariosPage() {
   function handleDelete(userId: string) {
     if (!confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return
     startTransition(async () => {
-      await deleteUsuario(userId)
+      const result = await deleteUsuario(userId)
+      if (result?.error) {
+        alert("Error al eliminar: " + result.error)
+        return
+      }
       await loadUsers()
     })
   }
