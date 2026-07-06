@@ -42,6 +42,7 @@ export default function UsuariosPage() {
   const [auditLog, setAuditLog] = useState<any[]>([])
   const [showAudit, setShowAudit] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   const isAdmin = myRole === "admin"
   const allowedRoles = isAdmin
@@ -77,9 +78,9 @@ export default function UsuariosPage() {
   }
 
   async function handleDelete(userId: string) {
-    if (!confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return
     setDeleteError(null)
     setIsDeleting(true)
+    setConfirmingId(null)
     try {
       const result = await deleteUsuario(userId)
       if (result?.error) {
@@ -150,14 +151,6 @@ export default function UsuariosPage() {
             Nuevo usuario
           </button>
         </div>
-
-        {deleteError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
-            <span className="font-bold shrink-0">Error al eliminar:</span>
-            <span className="break-all">{deleteError}</span>
-            <button onClick={() => setDeleteError(null)} className="ml-auto shrink-0 text-red-400 hover:text-red-600">✕</button>
-          </div>
-        )}
 
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           {loading ? (
@@ -233,30 +226,51 @@ export default function UsuariosPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end">
-                          <button
-                            onClick={() => setPasswordTarget(user)}
-                            disabled={isDeleting}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-[#2B7A9E] hover:bg-[#2B7A9E]/10 transition-colors disabled:opacity-40"
-                            title="Cambiar contraseña"
-                          >
-                            <KeyRound className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleActive(user.id, user.activo)}
-                            disabled={isDeleting}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
-                            title={user.activo ? "Desactivar" : "Activar"}
-                          >
-                            {user.activo ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.id)}
-                            disabled={isDeleting}
-                            className="p-1.5 rounded-lg text-[#aaa] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          {confirmingId === user.id ? (
+                            <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                              <span className="text-xs text-red-600 font-medium whitespace-nowrap">¿Eliminar?</span>
+                              <button
+                                onClick={() => handleDelete(user.id)}
+                                disabled={isDeleting}
+                                className="text-xs font-bold text-white bg-red-500 hover:bg-red-600 rounded px-2 py-0.5 disabled:opacity-50"
+                              >
+                                {isDeleting ? "..." : "Sí"}
+                              </button>
+                              <button
+                                onClick={() => setConfirmingId(null)}
+                                className="text-xs font-bold text-[#555] hover:text-[#333] rounded px-2 py-0.5"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => setPasswordTarget(user)}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-lg text-[#aaa] hover:text-[#2B7A9E] hover:bg-[#2B7A9E]/10 transition-colors disabled:opacity-40"
+                                title="Cambiar contraseña"
+                              >
+                                <KeyRound className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleToggleActive(user.id, user.activo)}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
+                                title={user.activo ? "Desactivar" : "Activar"}
+                              >
+                                {user.activo ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
+                              </button>
+                              <button
+                                onClick={() => setConfirmingId(user.id)}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-lg text-[#aaa] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -336,6 +350,17 @@ export default function UsuariosPage() {
           onClose={() => setPasswordTarget(null)}
           onSave={handleChangePassword}
         />
+      )}
+
+      {/* Toast de error — fijo, siempre visible */}
+      {deleteError && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm w-full bg-white border border-red-300 rounded-xl shadow-xl p-4 flex items-start gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-bold text-red-600">Error al eliminar</p>
+            <p className="text-xs text-red-500 mt-1 break-all">{deleteError}</p>
+          </div>
+          <button onClick={() => setDeleteError(null)} className="text-red-400 hover:text-red-600 shrink-0 text-lg leading-none">✕</button>
+        </div>
       )}
     </>
   )

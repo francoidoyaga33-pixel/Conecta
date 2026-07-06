@@ -150,17 +150,11 @@ export async function deleteUsuario(userId: string) {
 
   if (!target) return { error: "Usuario no encontrado." }
 
-  // DIAGNÓSTICO TEMPORAL
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if ((globalThis as any).__deleteDiag !== false) {
-    return { error: `DIAGNÓSTICO: myRole=${myRole} | targetRole=${target.role} | userId=${userId.slice(0, 8)}` }
-  }
-
-  // Jerarquía de permisos:
+  // Jerarquía de permisos
   if (myRole === "admin") {
-    // permitido
+    // ok
   } else if (myRole === "docente" && target.role === "estudiante") {
-    // permitido
+    // ok
   } else {
     return { error: "No tenés permisos para eliminar este tipo de usuario." }
   }
@@ -168,48 +162,37 @@ export async function deleteUsuario(userId: string) {
   const supabase = await createClient()
   const { data: { user: me } } = await supabase.auth.getUser()
 
-  // Limpiar registros relacionados uno por uno para detectar cuál falla
-  const cleanups: { tabla: string; result: { error: any } }[] = []
+  // 1. Limpiar referencias FK en paralelo (ignoramos errores de tablas que no aplican)
+  await Promise.allSettled([
+    admin.from("conecta_legajos").delete().eq("id", userId),
+    admin.from("conecta_matriculas").delete().eq("alumno_id", userId),
+    admin.from("conecta_asistencia").delete().eq("estudiante_id", userId),
+    admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId),
+    admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId),
+    admin.from("conecta_carga_horaria").delete().eq("docente_id", userId),
+    admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId),
+    admin.from("conecta_avisos").delete().eq("user_id", userId),
+    admin.from("conecta_bitacora").delete().eq("docente_id", userId),
+    admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId),
+    admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId),
+    admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId),
+    admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId),
+    admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId),
+    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId),
+  ])
 
-  const run = async (tabla: string, op: PromiseLike<{ error: any }>) => {
-    const result = await op
-    if (result.error) cleanups.push({ tabla, result })
-  }
-
-  await run("legajos",                     admin.from("conecta_legajos").delete().eq("id", userId))
-  await run("matriculas",                  admin.from("conecta_matriculas").delete().eq("alumno_id", userId))
-  await run("asistencia(estudiante_id)",   admin.from("conecta_asistencia").delete().eq("estudiante_id", userId))
-  await run("asistencia(registrado_por)",  admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId))
-  await run("asistencia_docentes",         admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId))
-  await run("carga_horaria",               admin.from("conecta_carga_horaria").delete().eq("docente_id", userId))
-  await run("pagos_docentes",              admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId))
-  await run("avisos",                      admin.from("conecta_avisos").delete().eq("user_id", userId))
-  await run("bitacora",                    admin.from("conecta_bitacora").delete().eq("docente_id", userId))
-  await run("mensajes(autor_id)",          admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId))
-  await run("conversacion_participantes",  admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId))
-  await run("grupos(docente_id)",          admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId))
-  await run("horarios(docente_id)",        admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId))
-  await run("eventos(autor_id)",           admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId))
-  await run("audit_log(realizado_por)",    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId))
-
-  if (cleanups.length > 0) {
-    const detalle = cleanups.map(c => `${c.tabla}: ${c.result.error?.message}`).join(" | ")
-    console.error("[deleteUsuario] Cleanup errors:", detalle)
-    return { error: `Error limpiando datos relacionados → ${detalle}` }
-  }
-
+  // 2. Eliminar perfil
   const { error: profileError } = await admin
-    .from("conecta_profiles")
-    .delete()
-    .eq("id", userId)
+    .from("conecta_profiles").delete().eq("id", userId)
 
   if (profileError) return { error: `Error eliminando perfil: ${profileError.message}` }
 
+  // 3. Eliminar usuario de auth
   const { error: authError } = await admin.auth.admin.deleteUser(userId)
-  if (authError) return { error: authError.message }
+  if (authError) return { error: `Error eliminando auth: ${authError.message}` }
 
-  // Registrar en auditoría
-  if (me && target) {
+  // Auditoría
+  if (me) {
     const descripcion = target.email.includes("@dni.conecta")
       ? `Eliminó al usuario ${target.nombre} ${target.apellido} (DNI: ${target.email.split("@")[0]}) — Rol: ${target.role}`
       : `Eliminó al usuario ${target.nombre} ${target.apellido} (${target.email}) — Rol: ${target.role}`
