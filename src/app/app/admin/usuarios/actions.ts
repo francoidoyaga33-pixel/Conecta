@@ -162,33 +162,33 @@ export async function deleteUsuario(userId: string) {
   const supabase = await createClient()
   const { data: { user: me } } = await supabase.auth.getUser()
 
-  // 1. Limpiar referencias FK en paralelo (ignoramos errores de tablas que no aplican)
-  await Promise.allSettled([
-    admin.from("conecta_legajos").delete().eq("id", userId),
-    admin.from("conecta_matriculas").delete().eq("alumno_id", userId),
-    admin.from("conecta_asistencia").delete().eq("estudiante_id", userId),
-    admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId),
-    admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId),
-    admin.from("conecta_carga_horaria").delete().eq("docente_id", userId),
-    admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId),
-    admin.from("conecta_avisos").delete().eq("user_id", userId),
-    admin.from("conecta_bitacora").delete().eq("docente_id", userId),
-    admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId),
-    admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId),
-    admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId),
-    admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId),
-    admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId),
-    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId),
-  ])
+  // 1. Limpiar referencias FK (await secuencial, más robusto que allSettled con PromiseLike)
+  await admin.from("conecta_legajos").delete().eq("id", userId)
+  await admin.from("conecta_matriculas").delete().eq("alumno_id", userId)
+  await admin.from("conecta_asistencia").delete().eq("estudiante_id", userId)
+  await admin.from("conecta_asistencia").update({ registrado_por: null }).eq("registrado_por", userId)
+  await admin.from("conecta_asistencia_docentes").delete().eq("docente_id", userId)
+  await admin.from("conecta_carga_horaria").delete().eq("docente_id", userId)
+  await admin.from("conecta_pagos_docentes").delete().eq("docente_id", userId)
+  await admin.from("conecta_avisos").delete().eq("autor_id", userId)
+  await admin.from("conecta_bitacora").delete().eq("docente_id", userId)
+  await admin.from("conecta_mensajes").update({ autor_id: null }).eq("autor_id", userId)
+  await admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId)
+  await admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId)
+  await admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId)
+  await admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId)
+  await admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId)
 
   // 2. Eliminar perfil
   const { error: profileError } = await admin
     .from("conecta_profiles").delete().eq("id", userId)
 
+  console.log("[deleteUsuario] profileError:", profileError?.message ?? "null")
   if (profileError) return { error: `Error eliminando perfil: ${profileError.message}` }
 
   // 3. Eliminar usuario de auth
   const { error: authError } = await admin.auth.admin.deleteUser(userId)
+  console.log("[deleteUsuario] authError:", authError?.message ?? "null")
   if (authError) return { error: `Error eliminando auth: ${authError.message}` }
 
   // Auditoría
