@@ -169,7 +169,7 @@ export async function deleteUsuario(userId: string) {
   // Limpiar registros relacionados uno por uno para detectar cuál falla
   const cleanups: { tabla: string; result: { error: any } }[] = []
 
-  const run = async (tabla: string, op: Promise<{ error: any }>) => {
+  const run = async (tabla: string, op: PromiseLike<{ error: any }>) => {
     const result = await op
     if (result.error) cleanups.push({ tabla, result })
   }
