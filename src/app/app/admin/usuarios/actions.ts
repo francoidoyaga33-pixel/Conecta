@@ -153,11 +153,21 @@ export async function deleteUsuario(userId: string) {
     .eq("id", userId)
     .single()
 
-  // Eliminar registros relacionados para evitar FK violations
-  await admin.from("conecta_legajos").delete().eq("id", userId)
-  await admin.from("conecta_asistencia").delete().eq("alumno_id", userId)
-  await admin.from("conecta_matriculas").delete().eq("alumno_id", userId)
-  await admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId)
+  // Limpiar todos los registros relacionados para evitar FK violations
+  await Promise.all([
+    // Tablas con delete directo
+    admin.from("conecta_legajos").delete().eq("id", userId),
+    admin.from("conecta_asistencia").delete().eq("alumno_id", userId),
+    admin.from("conecta_matriculas").delete().eq("alumno_id", userId),
+    admin.from("conecta_avisos").delete().eq("user_id", userId),
+    admin.from("conecta_bitacora").delete().eq("docente_id", userId),
+    admin.from("conecta_conversacion_participantes").delete().eq("usuario_id", userId),
+    // Tablas donde se pone null para preservar el historial
+    admin.from("conecta_grupos").update({ docente_id: null }).eq("docente_id", userId),
+    admin.from("conecta_horarios").update({ docente_id: null }).eq("docente_id", userId),
+    admin.from("conecta_eventos").update({ autor_id: null }).eq("autor_id", userId),
+    admin.from("conecta_audit_log").update({ realizado_por: null }).eq("realizado_por", userId),
+  ])
 
   const { error: profileError } = await admin
     .from("conecta_profiles")
