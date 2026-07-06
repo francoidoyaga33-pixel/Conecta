@@ -183,12 +183,10 @@ export async function deleteUsuario(userId: string) {
   const { error: profileError } = await admin
     .from("conecta_profiles").delete().eq("id", userId)
 
-  console.log("[deleteUsuario] profileError:", profileError?.message ?? "null")
   if (profileError) return { error: `Error eliminando perfil: ${profileError.message}` }
 
   // 3. Eliminar usuario de auth
   const { error: authError } = await admin.auth.admin.deleteUser(userId)
-  console.log("[deleteUsuario] authError:", authError?.message ?? "null")
   if (authError) return { error: `Error eliminando auth: ${authError.message}` }
 
   // Auditoría
