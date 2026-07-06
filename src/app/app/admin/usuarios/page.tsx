@@ -86,6 +86,9 @@ export default function UsuariosPage() {
       if (result?.error) {
         setDeleteError(result.error)
       } else {
+        // Quitar inmediatamente de la UI
+        setUsers(prev => prev.filter(u => u.id !== userId))
+        // Luego refrescar desde la BD para verificar
         await loadUsers()
       }
     } catch (e) {
