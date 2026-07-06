@@ -40,6 +40,7 @@ export default function UsuariosPage() {
   const [isPending, startTransition] = useTransition()
   const [auditLog, setAuditLog] = useState<any[]>([])
   const [showAudit, setShowAudit] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const isAdmin = myRole === "admin"
   const allowedRoles = isAdmin
@@ -76,13 +77,18 @@ export default function UsuariosPage() {
 
   function handleDelete(userId: string) {
     if (!confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return
+    setDeleteError(null)
     startTransition(async () => {
-      const result = await deleteUsuario(userId)
-      if (result?.error) {
-        alert("Error al eliminar: " + result.error)
-        return
+      try {
+        const result = await deleteUsuario(userId)
+        if (result?.error) {
+          setDeleteError(result.error)
+          return
+        }
+        await loadUsers()
+      } catch (e) {
+        setDeleteError("Excepción inesperada: " + String(e))
       }
-      await loadUsers()
     })
   }
 
@@ -142,6 +148,14 @@ export default function UsuariosPage() {
             Nuevo usuario
           </button>
         </div>
+
+        {deleteError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+            <span className="font-bold shrink-0">Error al eliminar:</span>
+            <span className="break-all">{deleteError}</span>
+            <button onClick={() => setDeleteError(null)} className="ml-auto shrink-0 text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           {loading ? (
