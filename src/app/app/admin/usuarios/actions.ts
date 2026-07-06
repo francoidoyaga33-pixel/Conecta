@@ -138,14 +138,7 @@ export async function changePassword(userId: string, newPassword: string) {
 }
 
 export async function deleteUsuario(userId: string) {
-  // TEST TEMPORAL — confirmar que el server action llega al cliente
   const myRole = await getMyRole()
-  const admin2 = createAdminClient()
-  const { data: testTarget } = await admin2.from("conecta_profiles").select("role").eq("id", userId).single()
-  return { error: `DIAGNÓSTICO: myRole=${myRole} | targetRole=${testTarget?.role ?? "no encontrado"} | userId=${userId.slice(0,8)}` }
-  // eslint-disable-next-line no-unreachable
-  const _myRole = myRole
-
   const admin = createAdminClient()
 
   // Obtener el rol del usuario a eliminar para validar permisos
@@ -157,10 +150,13 @@ export async function deleteUsuario(userId: string) {
 
   if (!target) return { error: "Usuario no encontrado." }
 
+  // DIAGNÓSTICO TEMPORAL
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if ((globalThis as any).__deleteDiag !== false) {
+    return { error: `DIAGNÓSTICO: myRole=${myRole} | targetRole=${target.role} | userId=${userId.slice(0, 8)}` }
+  }
+
   // Jerarquía de permisos:
-  // - admin: puede eliminar cualquier usuario
-  // - docente: solo puede eliminar estudiantes
-  // - el resto: sin permiso
   if (myRole === "admin") {
     // permitido
   } else if (myRole === "docente" && target.role === "estudiante") {
