@@ -38,6 +38,7 @@ export default function UsuariosPage() {
   const [showModal, setShowModal] = useState(false)
   const [passwordTarget, setPasswordTarget] = useState<ConectaUser | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isDeleting, setIsDeleting] = useState(false)
   const [auditLog, setAuditLog] = useState<any[]>([])
   const [showAudit, setShowAudit] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -75,21 +76,22 @@ export default function UsuariosPage() {
     })
   }
 
-  function handleDelete(userId: string) {
+  async function handleDelete(userId: string) {
     if (!confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.")) return
     setDeleteError(null)
-    startTransition(async () => {
-      try {
-        const result = await deleteUsuario(userId)
-        if (result?.error) {
-          setDeleteError(result.error)
-          return
-        }
+    setIsDeleting(true)
+    try {
+      const result = await deleteUsuario(userId)
+      if (result?.error) {
+        setDeleteError(result.error)
+      } else {
         await loadUsers()
-      } catch (e) {
-        setDeleteError("Excepción inesperada: " + String(e))
       }
-    })
+    } catch (e) {
+      setDeleteError("Excepción: " + String(e))
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   async function handleChangePassword(userId: string, newPassword: string) {
@@ -233,7 +235,7 @@ export default function UsuariosPage() {
                         <div className="flex items-center gap-1 justify-end">
                           <button
                             onClick={() => setPasswordTarget(user)}
-                            disabled={isPending}
+                            disabled={isDeleting}
                             className="p-1.5 rounded-lg text-[#aaa] hover:text-[#2B7A9E] hover:bg-[#2B7A9E]/10 transition-colors disabled:opacity-40"
                             title="Cambiar contraseña"
                           >
@@ -241,7 +243,7 @@ export default function UsuariosPage() {
                           </button>
                           <button
                             onClick={() => handleToggleActive(user.id, user.activo)}
-                            disabled={isPending}
+                            disabled={isDeleting}
                             className="p-1.5 rounded-lg text-[#aaa] hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
                             title={user.activo ? "Desactivar" : "Activar"}
                           >
@@ -249,7 +251,7 @@ export default function UsuariosPage() {
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}
-                            disabled={isPending}
+                            disabled={isDeleting}
                             className="p-1.5 rounded-lg text-[#aaa] hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
                             title="Eliminar"
                           >
