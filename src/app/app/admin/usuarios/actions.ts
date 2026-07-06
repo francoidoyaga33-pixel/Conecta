@@ -139,19 +139,32 @@ export async function changePassword(userId: string, newPassword: string) {
 
 export async function deleteUsuario(userId: string) {
   const myRole = await getMyRole()
-  if (myRole !== "admin") return { error: "Solo los administradores pueden eliminar usuarios." }
-
-  const supabase = await createClient()
-  const { data: { user: me } } = await supabase.auth.getUser()
 
   const admin = createAdminClient()
 
-  // Guardar datos del usuario antes de eliminar
+  // Obtener el rol del usuario a eliminar para validar permisos
   const { data: target } = await admin
     .from("conecta_profiles")
     .select("nombre, apellido, email, role")
     .eq("id", userId)
     .single()
+
+  if (!target) return { error: "Usuario no encontrado." }
+
+  // Jerarquía de permisos:
+  // - admin: puede eliminar cualquier usuario
+  // - docente: solo puede eliminar estudiantes
+  // - el resto: sin permiso
+  if (myRole === "admin") {
+    // permitido
+  } else if (myRole === "docente" && target.role === "estudiante") {
+    // permitido
+  } else {
+    return { error: "No tenés permisos para eliminar este tipo de usuario." }
+  }
+
+  const supabase = await createClient()
+  const { data: { user: me } } = await supabase.auth.getUser()
 
   // Limpiar todos los registros relacionados para evitar FK violations
   await Promise.all([
