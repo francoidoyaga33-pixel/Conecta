@@ -368,7 +368,7 @@ export default function LegajoPage() {
               <div className="grid grid-cols-2 gap-4">
                 <Input label="Fecha de nacimiento" name="fecha_nacimiento" value={form.fecha_nacimiento ?? ""} onChange={handleChange} type="date" />
                 <Input label="DNI" name="dni" value={form.dni ?? ""} onChange={handleChange} placeholder="12345678" />
-                <Input label="CUIL" name="cuil" value={form.cuil ?? ""} onChange={handleChange} placeholder="20-12345678-9" />
+                <Input label="CUIL a facturar" name="cuil" value={form.cuil ?? ""} onChange={handleChange} placeholder="20-12345678-9" />
                 <Input label="Teléfono" name="telefono" value={form.telefono ?? ""} onChange={handleChange} placeholder="+54 9 11 1234-5678" />
                 <Input label="Dirección" name="direccion" value={form.direccion ?? ""} onChange={handleChange} placeholder="Av. Corrientes 1234" />
                 <Input label="Localidad" name="localidad" value={form.localidad ?? ""} onChange={handleChange} placeholder="Buenos Aires" />
@@ -379,10 +379,10 @@ export default function LegajoPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <Input label="Nombre del padre" name="nombre_padre" value={form.nombre_padre ?? ""} onChange={handleChange} />
                   <Input label="Teléfono del padre" name="telefono_padre" value={form.telefono_padre ?? ""} onChange={handleChange} />
-                  <Input label="Email del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} type="email" />
+                  <Input label="CUIL del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} />
                   <Input label="Nombre de la madre" name="nombre_madre" value={form.nombre_madre ?? ""} onChange={handleChange} />
                   <Input label="Teléfono de la madre" name="telefono_madre" value={form.telefono_madre ?? ""} onChange={handleChange} />
-                  <Input label="Email de la madre" name="email_madre" value={form.email_madre ?? ""} onChange={handleChange} type="email" />
+                  <Input label="CUIL de la madre" name="email_madre" value={form.email_madre ?? ""} onChange={handleChange} />
                 </div>
               </div>
 
@@ -421,7 +421,7 @@ export default function LegajoPage() {
                   <div className="grid grid-cols-3 gap-x-6 gap-y-4">
                     <Field label="Fecha de nacimiento" value={legajo.fecha_nacimiento ? new Date(legajo.fecha_nacimiento + "T12:00:00").toLocaleDateString("es-AR") : null} />
                     <Field label="DNI" value={legajo.dni} />
-                    <Field label="CUIL" value={legajo.cuil} />
+                    <Field label="CUIL a facturar" value={legajo.cuil} />
                     <Field label="Teléfono" value={legajo.telefono} />
                     <Field label="Dirección" value={legajo.direccion} />
                     <Field label="Localidad" value={legajo.localidad} />
@@ -432,10 +432,10 @@ export default function LegajoPage() {
                     <div className="grid grid-cols-3 gap-x-6 gap-y-4">
                       <Field label="Padre" value={legajo.nombre_padre} />
                       <Field label="Tel. padre" value={legajo.telefono_padre} />
-                      <Field label="Email padre" value={legajo.email_padre} />
+                      <Field label="CUIL padre" value={legajo.email_padre} />
                       <Field label="Madre" value={legajo.nombre_madre} />
                       <Field label="Tel. madre" value={legajo.telefono_madre} />
-                      <Field label="Email madre" value={legajo.email_madre} />
+                      <Field label="CUIL madre" value={legajo.email_madre} />
                     </div>
                   </div>
 
