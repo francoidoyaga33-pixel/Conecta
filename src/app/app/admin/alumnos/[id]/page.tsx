@@ -289,7 +289,11 @@ export default function LegajoPage() {
           </label>
           <div className="flex-1 min-w-0">
             <p className="text-lg font-black text-[#3D3D3D]">{profile.apellido}, {profile.nombre}</p>
-            <p className="text-sm text-[#aaa]">{profile.email}</p>
+            <p className="text-sm text-[#aaa]">
+              {profile.email.includes("@dni.conecta")
+                ? `DNI: ${profile.email.split("@")[0]}`
+                : profile.email}
+            </p>
             <p className="text-xs text-[#bbb] mt-0.5">
               Miembro desde {new Date(profile.created_at).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
             </p>
