@@ -38,15 +38,24 @@ export async function getGrupos() {
 
 export async function getEstudiantesDeGrupo(grupoId: string) {
   const admin = createAdminClient()
-  const { data } = await admin
+
+  const { data: matriculas } = await admin
     .from("conecta_matriculas")
-    .select("conecta_profiles!alumno_id(id, nombre, apellido, email)")
+    .select("alumno_id")
     .eq("grupo_id", grupoId)
 
-  return (data ?? [])
-    .map((m: any) => m.conecta_profiles)
-    .filter(Boolean)
-    .sort((a: any, b: any) => a.apellido.localeCompare(b.apellido))
+  if (!matriculas || matriculas.length === 0) return []
+
+  const alumnoIds = matriculas.map((m) => m.alumno_id).filter(Boolean)
+  if (alumnoIds.length === 0) return []
+
+  const { data } = await admin
+    .from("conecta_profiles")
+    .select("id, nombre, apellido, email")
+    .in("id", alumnoIds)
+    .order("apellido")
+
+  return data ?? []
 }
 
 export async function getAsistenciaDelDia(grupoId: string, fecha: string) {
