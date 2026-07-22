@@ -38,14 +38,15 @@ export async function getGrupos() {
 
 export async function getEstudiantesDeGrupo(grupoId: string) {
   const admin = createAdminClient()
-  // Obtener todos los perfiles con rol estudiante (simplificado, luego se puede agregar tabla de inscripciones)
   const { data } = await admin
-    .from("conecta_profiles")
-    .select("id, nombre, apellido, email")
-    .eq("role", "estudiante")
-    .eq("activo", true)
-    .order("apellido")
-  return data ?? []
+    .from("conecta_matriculas")
+    .select("conecta_profiles!alumno_id(id, nombre, apellido, email)")
+    .eq("grupo_id", grupoId)
+
+  return (data ?? [])
+    .map((m: any) => m.conecta_profiles)
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.apellido.localeCompare(b.apellido))
 }
 
 export async function getAsistenciaDelDia(grupoId: string, fecha: string) {
