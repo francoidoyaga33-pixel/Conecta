@@ -64,7 +64,7 @@ export async function createUsuario(formData: {
 
   // Para cuentas DNI se genera un email interno invisible al usuario
   const email = formData.loginMethod === "dni"
-    ? `${formData.dni}@dni.conecta.app`
+    ? `${formData.dni}@dni.conecta.internal`
     : formData.email
 
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
