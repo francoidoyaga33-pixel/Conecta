@@ -1,8 +1,5 @@
 export const MATERIAS = [
-  "Programación",
-  "Robótica",
-  "Fábrica Digital",
-  "Inglés",
-  "Finanzas",
-  "Taller de IA",
+  "Conectarte (4 a 5 años)",
+  "Conectaditos (6 a 9 años)",
+  "Conectados (10 años en adelante)",
 ] as const
