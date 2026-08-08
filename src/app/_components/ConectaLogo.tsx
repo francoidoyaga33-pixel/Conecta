@@ -1,4 +1,4 @@
-export function ConectaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+export function ConectaLogo({ size = "md", iconOnly = false }: { size?: "sm" | "md" | "lg"; iconOnly?: boolean }) {
   const scale = size === "sm" ? 0.6 : size === "lg" ? 1.4 : 1
 
   return (
@@ -25,12 +25,14 @@ export function ConectaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
         <line x1="18" y1="30" x2="18" y2="40" stroke="#2B7A9E" strokeWidth="1.2" />
       </svg>
 
-      <div className="flex flex-col leading-none">
-        <span className="text-2xl font-black tracking-wider text-[#4A4A4A]">CONECTA</span>
-        <span className="text-[9px] font-medium tracking-[0.25em] text-[#2B7A9E] uppercase">
-          Educación Interactiva
-        </span>
-      </div>
+      {!iconOnly && (
+        <div className="flex flex-col leading-none">
+          <span className="text-2xl font-black tracking-wider text-[#4A4A4A]">CONECTA</span>
+          <span className="text-[9px] font-medium tracking-[0.25em] text-[#2B7A9E] uppercase">
+            Educación Interactiva
+          </span>
+        </div>
+      )}
     </div>
   )
 }
