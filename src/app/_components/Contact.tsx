@@ -154,54 +154,53 @@ export function Contact() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="tu@email.com"
-                    value={form.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
-                  />
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Teléfono (opcional)</label>
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Teléfono / WhatsApp</label>
                     <input
                       type="tel"
                       name="phone"
                       placeholder="+54 9 ..."
                       value={form.phone}
                       onChange={handleChange}
+                      required
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Programa de interés</label>
-                    <select
-                      name="cursos_interes"
-                      value={form.cursos_interes}
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Email (opcional)</label>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="tu@email.com"
+                      value={form.email}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
-                    >
-                      <option value="">No estoy seguro/a</option>
-                      {MATERIAS.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Mensaje</label>
+                  <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Programa de interés</label>
+                  <select
+                    name="cursos_interes"
+                    value={form.cursos_interes}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                  >
+                    <option value="">No estoy seguro/a</option>
+                    {MATERIAS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Mensaje (opcional)</label>
                   <textarea
                     name="message"
                     placeholder="Contanos sobre tu hijo/a: edad, intereses, y cualquier consulta que tengas..."
                     value={form.message}
                     onChange={handleChange}
                     rows={4}
-                    required
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors resize-none"
                   />
                 </div>

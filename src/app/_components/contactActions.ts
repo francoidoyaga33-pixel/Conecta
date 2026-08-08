@@ -13,12 +13,13 @@ export async function enviarContacto(payload: {
   const nombre = payload.nombre.trim()
   const apellido = payload.apellido.trim()
   const email = payload.email.trim()
+  const telefono = payload.telefono.trim()
   const mensaje = payload.mensaje.trim()
 
-  if (!nombre || !apellido || !email || !mensaje) {
+  if (!nombre || !apellido || !telefono) {
     return { error: "Completá los campos obligatorios." }
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { error: "Ingresá un email válido." }
   }
 
@@ -27,7 +28,7 @@ export async function enviarContacto(payload: {
     nombre,
     apellido,
     email,
-    telefono: payload.telefono.trim(),
+    telefono,
     cursos_interes: payload.cursos_interes,
     canal: "web",
     estado_venta: "nuevo",
