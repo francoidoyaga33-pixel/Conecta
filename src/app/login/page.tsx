@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { ConectaLogo } from "../_components/ConectaLogo"
-import { Loader2, Lock, Mail, CreditCard } from "lucide-react"
+import { Loader2, Lock, Mail, CreditCard, ArrowLeft } from "lucide-react"
 import { getEmailByDNI } from "./actions"
 
 export default function LoginPage() {
@@ -48,6 +49,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F0F7FA] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#888] hover:text-[#2B7A9E] transition-colors mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver al inicio
+        </Link>
+
         <div className="flex justify-center mb-8">
           <ConectaLogo size="md" />
         </div>
