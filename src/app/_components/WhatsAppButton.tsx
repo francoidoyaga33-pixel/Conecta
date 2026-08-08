@@ -1,8 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { Instagram } from "lucide-react"
 
 export const WHATSAPP_PHONE = "5493704715907"
+export const INSTAGRAM_URL = "https://www.instagram.com/formacionconecta/"
 const DEFAULT_MESSAGE = "Hola! Quiero más información sobre los programas de Conecta."
 
 export function whatsappHref(message: string = DEFAULT_MESSAGE) {
@@ -18,21 +20,39 @@ function WhatsAppIcon({ className }: { className?: string }) {
   )
 }
 
-export function WhatsAppButton() {
+export function FloatingSocialButtons() {
   return (
-    <motion.a
-      href={whatsappHref()}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Contactar por WhatsApp"
-      initial={{ opacity: 0, scale: 0.6 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: 0.6 }}
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.95 }}
-      className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#25D366] shadow-lg shadow-black/20 flex items-center justify-center hover:bg-[#20BD5A] transition-colors"
-    >
-      <WhatsAppIcon className="h-7 w-7 text-white" />
-    </motion.a>
+    <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
+      <motion.a
+        href={INSTAGRAM_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Seguinos en Instagram"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        className="h-14 w-14 rounded-full shadow-lg shadow-black/20 flex items-center justify-center transition-opacity hover:opacity-90"
+        style={{ background: "radial-gradient(circle at 30% 110%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" }}
+      >
+        <Instagram className="h-6 w-6 text-white" />
+      </motion.a>
+
+      <motion.a
+        href={whatsappHref()}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: 0.6 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        className="h-14 w-14 rounded-full bg-[#25D366] shadow-lg shadow-black/20 flex items-center justify-center hover:bg-[#20BD5A] transition-colors"
+      >
+        <WhatsAppIcon className="h-7 w-7 text-white" />
+      </motion.a>
+    </div>
   )
 }

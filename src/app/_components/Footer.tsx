@@ -1,5 +1,6 @@
 import { Instagram } from "lucide-react"
 import { ConectaLogo } from "./ConectaLogo"
+import { INSTAGRAM_URL } from "./WhatsAppButton"
 
 export function Footer() {
   return (
@@ -21,7 +22,7 @@ export function Footer() {
           </nav>
 
           <a
-            href="https://www.instagram.com/formacionconecta/"
+            href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Conecta en Instagram"

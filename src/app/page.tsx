@@ -8,7 +8,7 @@ import { Programs } from "./_components/Programs"
 import { Methodology } from "./_components/Methodology"
 import { Contact } from "./_components/Contact"
 import { Footer } from "./_components/Footer"
-import { WhatsAppButton } from "./_components/WhatsAppButton"
+import { FloatingSocialButtons } from "./_components/WhatsAppButton"
 
 export const dynamic = "force-dynamic"
 
@@ -45,7 +45,7 @@ export default async function ConectaPage() {
         <Contact />
       </main>
       <Footer />
-      <WhatsAppButton />
+      <FloatingSocialButtons />
     </div>
   )
 }

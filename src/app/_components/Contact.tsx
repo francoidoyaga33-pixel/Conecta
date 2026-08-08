@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react"
 import { Mail, Phone, MapPin, Instagram, Send, Loader2 } from "lucide-react"
 import { MATERIAS } from "./materias"
 import { enviarContacto } from "./contactActions"
-import { whatsappHref } from "./WhatsAppButton"
+import { whatsappHref, INSTAGRAM_URL } from "./WhatsAppButton"
 
 const EMPTY_FORM = {
   nombre: "", apellido: "", email: "", phone: "", cursos_interes: "", message: "",
@@ -72,7 +72,7 @@ export function Contact() {
             {[
               { icon: Mail, label: "Email", value: "Formacionconectafca@gmail.com", href: "mailto:Formacionconectafca@gmail.com" },
               { icon: Phone, label: "Teléfono / WhatsApp", value: "+54 9 3704 71-5907", href: whatsappHref() },
-              { icon: Instagram, label: "Instagram", value: "@formacionconecta", href: "https://www.instagram.com/formacionconecta/" },
+              { icon: Instagram, label: "Instagram", value: "@formacionconecta", href: INSTAGRAM_URL },
               { icon: MapPin, label: "Dirección", value: "Maipú 1545", href: null },
             ].map(({ icon: Icon, label, value, href }) => (
               <div key={label} className="flex items-start gap-4">
