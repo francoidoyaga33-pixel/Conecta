@@ -1,3 +1,4 @@
+import { Instagram } from "lucide-react"
 import { ConectaLogo } from "./ConectaLogo"
 
 export function Footer() {
@@ -18,6 +19,17 @@ export function Footer() {
               </a>
             ))}
           </nav>
+
+          <a
+            href="https://www.instagram.com/formacionconecta/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Conecta en Instagram"
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            <Instagram className="h-4 w-4" />
+            @formacionconecta
+          </a>
 
           <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} Conecta Educación Interactiva
