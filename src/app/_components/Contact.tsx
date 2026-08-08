@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react"
 import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react"
 import { MATERIAS } from "./materias"
 import { enviarContacto } from "./contactActions"
+import { whatsappHref } from "./WhatsAppButton"
 
 const EMPTY_FORM = {
   nombre: "", apellido: "", email: "", phone: "", cursos_interes: "", message: "",
@@ -69,17 +70,28 @@ export function Contact() {
             className="space-y-6"
           >
             {[
-              { icon: Mail, label: "Email", value: "Formacionconectafca@gmail.com" },
-              { icon: Phone, label: "Teléfono", value: "+54 9 3704 71-5907" },
-              { icon: MapPin, label: "Dirección", value: "Maipú 1545" },
-            ].map(({ icon: Icon, label, value }) => (
+              { icon: Mail, label: "Email", value: "Formacionconectafca@gmail.com", href: "mailto:Formacionconectafca@gmail.com" },
+              { icon: Phone, label: "Teléfono / WhatsApp", value: "+54 9 3704 71-5907", href: whatsappHref() },
+              { icon: MapPin, label: "Dirección", value: "Maipú 1545", href: null },
+            ].map(({ icon: Icon, label, value, href }) => (
               <div key={label} className="flex items-start gap-4">
                 <div className="h-10 w-10 rounded-xl bg-[var(--c-primary-10)] flex items-center justify-center shrink-0">
                   <Icon className="h-5 w-5 text-[var(--c-primary)]" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-[var(--c-text-light)] uppercase tracking-wider mb-0.5">{label}</p>
-                  <p className="text-sm text-[var(--c-text)] font-medium">{value}</p>
+                  {href ? (
+                    <a
+                      href={href}
+                      target={href.startsWith("http") ? "_blank" : undefined}
+                      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                      className="text-sm text-[var(--c-text)] font-medium hover:text-[var(--c-primary)] transition-colors"
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-[var(--c-text)] font-medium">{value}</p>
+                  )}
                 </div>
               </div>
             ))}
