@@ -2,7 +2,13 @@
 
 import { motion } from "framer-motion"
 
-export function Hero() {
+interface HeroStats {
+  estudiantes: number
+  grupos: number
+  programas: number
+}
+
+export function Hero({ stats }: { stats: HeroStats }) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white pt-16">
       {/* Background geometric pattern */}
@@ -68,9 +74,9 @@ export function Hero() {
           {/* Stats */}
           <div className="flex gap-10 mt-12 pt-8 border-t border-gray-100">
             {[
-              { num: "200+", label: "Estudiantes" },
-              { num: "8", label: "Años de experiencia" },
-              { num: "95%", label: "Satisfacción" },
+              { num: `${stats.estudiantes}+`, label: "Estudiantes" },
+              { num: `${stats.programas}`, label: "Programas" },
+              { num: `${stats.grupos}`, label: "Grupos activos" },
             ].map((s) => (
               <div key={s.label}>
                 <p className="text-2xl font-black text-[var(--c-primary)]">{s.num}</p>
