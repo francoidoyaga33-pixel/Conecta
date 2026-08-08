@@ -2,43 +2,37 @@
 
 import { motion, useInView } from "framer-motion"
 import { useRef } from "react"
-import { Cpu, Bot, Factory, Globe, Calculator, PiggyBank, Sparkles } from "lucide-react"
-import { MATERIAS } from "./materias"
+import { Cpu, Bot, Factory, Globe, PiggyBank, Sparkles } from "lucide-react"
 
 const courses = [
   {
     icon: Cpu,
-    name: MATERIAS[0],
+    name: "Programación",
     description: "Pensamiento lógico y proyectos de código real, desde los primeros bloques hasta lenguajes de programación.",
   },
   {
     icon: Bot,
-    name: MATERIAS[1],
+    name: "Robótica",
     description: "Diseño, armado y programación de robots para aprender ciencia y tecnología jugando.",
   },
   {
     icon: Factory,
-    name: MATERIAS[2],
+    name: "Fábrica Digital",
     description: "Diseño y fabricación digital: makers, prototipado e impresión 3D.",
   },
   {
     icon: Globe,
-    name: MATERIAS[3],
+    name: "Inglés",
     description: "Inglés interactivo con seguimiento personalizado, desde Starters hasta niveles avanzados.",
   },
   {
-    icon: Calculator,
-    name: MATERIAS[4],
-    description: "Matemática aplicada con un enfoque lúdico que conecta la teoría con la vida real.",
-  },
-  {
     icon: PiggyBank,
-    name: MATERIAS[5],
+    name: "Finanzas",
     description: "Educación financiera y espíritu emprendedor para chicos y jóvenes.",
   },
   {
     icon: Sparkles,
-    name: MATERIAS[6],
+    name: "Taller de IA",
     description: "Introducción a la Inteligencia Artificial: herramientas y proyectos del futuro.",
   },
 ]
