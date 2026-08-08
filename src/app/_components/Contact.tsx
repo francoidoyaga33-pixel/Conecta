@@ -1,24 +1,43 @@
 "use client"
 
 import { motion, useInView } from "framer-motion"
-import { useRef, useState } from "react"
+import { useRef, useState, useTransition } from "react"
 import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react"
+import { MATERIAS } from "./materias"
+import { enviarContacto } from "./contactActions"
+
+const EMPTY_FORM = {
+  nombre: "", apellido: "", email: "", phone: "", cursos_interes: "", message: "",
+}
 
 export function Contact() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: "-100px" })
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" })
+  const [form, setForm] = useState(EMPTY_FORM)
   const [sent, setSent] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    setTimeout(() => { setLoading(false); setSent(true) }, 1200)
+    setError(null)
+    startTransition(async () => {
+      const result = await enviarContacto({
+        nombre: form.nombre,
+        apellido: form.apellido,
+        email: form.email,
+        telefono: form.phone,
+        cursos_interes: form.cursos_interes,
+        mensaje: form.message,
+      })
+      if (result.error) { setError(result.error); return }
+      setSent(true)
+      setForm(EMPTY_FORM)
+    })
   }
 
   return (
@@ -50,9 +69,9 @@ export function Contact() {
             className="space-y-6"
           >
             {[
-              { icon: Mail, label: "Email", value: "info@conecta.edu.ar" },
-              { icon: Phone, label: "Teléfono", value: "+54 9 XXX XXX XXXX" },
-              { icon: MapPin, label: "Dirección", value: "Tu ciudad, Argentina" },
+              { icon: Mail, label: "Email", value: "Formacionconectafca@gmail.com" },
+              { icon: Phone, label: "Teléfono", value: "+54 9 3704 71-5907" },
+              { icon: MapPin, label: "Dirección", value: "Maipú 1545" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-4">
                 <div className="h-10 w-10 rounded-xl bg-[var(--c-primary-10)] flex items-center justify-center shrink-0">
@@ -67,7 +86,7 @@ export function Contact() {
 
             <div className="rounded-[var(--c-card-radius)] bg-[var(--c-surface)] p-6 mt-8">
               <p className="text-sm font-semibold text-[var(--c-text)] mb-2">Horarios de atención</p>
-              <p className="text-sm text-[var(--c-text-muted)]">Lunes a viernes: 8:00 – 18:00 hs</p>
+              <p className="text-sm text-[var(--c-text-muted)]">Lunes a viernes: 9:00 – 13:00 y 17:00 – 21:00 hs</p>
               <p className="text-sm text-[var(--c-text-muted)]">Sábados: 9:00 – 13:00 hs</p>
             </div>
           </motion.div>
@@ -87,27 +106,81 @@ export function Contact() {
                 <p className="text-sm text-[var(--c-text-muted)]">
                   Nos comunicaremos con vos a la brevedad. ¡Gracias por contactarte con Conecta!
                 </p>
+                <button
+                  onClick={() => setSent(false)}
+                  className="mt-6 text-sm font-semibold text-[var(--c-primary)] underline underline-offset-4"
+                >
+                  Enviar otro mensaje
+                </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                {[
-                  { name: "name", label: "Nombre completo", type: "text", placeholder: "Tu nombre" },
-                  { name: "email", label: "Email", type: "email", placeholder: "tu@email.com" },
-                  { name: "phone", label: "Teléfono (opcional)", type: "tel", placeholder: "+54 9 ..." },
-                ].map(({ name, label, type, placeholder }) => (
-                  <div key={name}>
-                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">{label}</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Nombre</label>
                     <input
-                      type={type}
-                      name={name}
-                      placeholder={placeholder}
-                      value={form[name as keyof typeof form]}
+                      type="text"
+                      name="nombre"
+                      placeholder="Tu nombre"
+                      value={form.nombre}
                       onChange={handleChange}
+                      required
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
-                      required={name !== "phone"}
                     />
                   </div>
-                ))}
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Apellido</label>
+                    <input
+                      type="text"
+                      name="apellido"
+                      placeholder="Tu apellido"
+                      value={form.apellido}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="tu@email.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Teléfono (opcional)</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="+54 9 ..."
+                      value={form.phone}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Programa de interés</label>
+                    <select
+                      name="cursos_interes"
+                      value={form.cursos_interes}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors"
+                    >
+                      <option value="">No estoy seguro/a</option>
+                      {MATERIAS.map((m) => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-[var(--c-text-muted)] mb-1.5">Mensaje</label>
                   <textarea
@@ -120,12 +193,19 @@ export function Contact() {
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[var(--c-text)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--c-primary-30)] focus:border-[var(--c-primary)] transition-colors resize-none"
                   />
                 </div>
+
+                {error && (
+                  <p className="rounded-xl bg-red-50 border border-red-100 px-4 py-2.5 text-sm text-red-600">
+                    {error}
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isPending}
                   className="w-full rounded-[var(--c-btn-radius)] bg-[var(--c-primary)] py-3.5 text-sm font-bold text-white hover:bg-[var(--c-primary-dark)] transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
                 >
-                  {loading ? (
+                  {isPending ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</>
                   ) : (
                     <><Send className="h-4 w-4" /> Enviar mensaje</>
