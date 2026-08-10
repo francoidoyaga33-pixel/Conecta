@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence, useInView } from "framer-motion"
 import { useRef, useState } from "react"
-import { Bot, Cpu, Wrench, CheckCircle2, CalendarDays, MapPinned } from "lucide-react"
+import { Bot, Cpu, Wrench, CheckCircle2, MapPinned } from "lucide-react"
 
 interface Nivel {
   nombre: string
@@ -203,9 +203,6 @@ export function Programs() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-[var(--c-text-muted)]">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-[var(--c-primary)]" /> Abril a noviembre
-            </span>
             <span className="inline-flex items-center gap-1.5">
               <MapPinned className="h-3.5 w-3.5 text-[var(--c-primary)]" /> Modalidad presencial
             </span>
