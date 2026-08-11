@@ -28,6 +28,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# database backups (contain real user/student data — never commit)
+/backups/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
