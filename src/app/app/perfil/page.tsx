@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { TopBar } from "../_components/TopBar"
 import { createClient } from "@/lib/supabase/client"
-import { Loader2, Camera, User, Mail, Shield, CheckCircle } from "lucide-react"
+import { Loader2, Camera, User, Mail, Shield, CheckCircle, X } from "lucide-react"
 
 const ROLE_LABELS: Record<string, string> = {
   admin:       "Administrador",
@@ -29,6 +29,7 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [showPhotoModal, setShowPhotoModal] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function loadProfile() {
@@ -108,25 +109,26 @@ export default function PerfilPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-6 flex flex-col items-center gap-4">
           <div className="relative">
             {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.nombre}
-                className="h-24 w-24 rounded-full object-cover border-2 border-gray-100"
-              />
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                className="block rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B7A9E] focus-visible:ring-offset-2"
+              >
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.nombre}
+                  className="h-24 w-24 rounded-full object-cover border-2 border-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              </button>
             ) : (
-              <div className="h-24 w-24 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-2xl font-black text-[#2B7A9E]">
+              <button
+                type="button"
+                onClick={() => setShowPhotoModal(true)}
+                className="h-24 w-24 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-2xl font-black text-[#2B7A9E] hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B7A9E] focus-visible:ring-offset-2"
+              >
                 {initials}
-              </div>
+              </button>
             )}
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#2B7A9E] flex items-center justify-center text-white hover:bg-[#246a8a] transition-colors shadow-md disabled:opacity-60"
-            >
-              {uploading
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <Camera className="h-4 w-4" />}
-            </button>
             <input
               ref={fileRef}
               type="file"
@@ -177,6 +179,59 @@ export default function PerfilPage() {
         </div>
 
       </main>
+
+      {showPhotoModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          onClick={() => setShowPhotoModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 flex flex-col items-center gap-5 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex justify-end">
+              <button
+                onClick={() => setShowPhotoModal(false)}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-[#aaa] hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.nombre}
+                className="h-64 w-64 rounded-full object-cover border-4 border-gray-100"
+              />
+            ) : (
+              <div className="h-64 w-64 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-6xl font-black text-[#2B7A9E]">
+                {initials}
+              </div>
+            )}
+
+            <p className="text-lg font-black text-[#3D3D3D] -mt-1">{profile.nombre} {profile.apellido}</p>
+
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="w-full flex items-center justify-center gap-2 rounded-full bg-[#2B7A9E] text-white font-semibold py-2.5 hover:bg-[#246a8a] transition-colors disabled:opacity-60"
+            >
+              {uploading
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Camera className="h-4 w-4" />}
+              {uploading ? "Subiendo..." : "Cambiar foto"}
+            </button>
+
+            {saved && (
+              <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                <CheckCircle className="h-4 w-4" />
+                Foto actualizada
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
