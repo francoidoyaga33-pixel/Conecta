@@ -82,7 +82,7 @@ export async function guardarLegajo(alumnoId: string, data: {
   return { error: null }
 }
 
-export async function actualizarAvatarUrl(alumnoId: string, avatarUrl: string) {
+export async function actualizarAvatarUrl(alumnoId: string, avatarUrl: string | null) {
   const admin = createAdminClient()
   const { error } = await admin
     .from("conecta_profiles")

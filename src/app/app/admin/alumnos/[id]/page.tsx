@@ -142,6 +142,15 @@ export default function LegajoPage() {
     e.target.value = ""
   }
 
+  async function handleRemoveAvatar() {
+    if (!confirm("¿Eliminar la foto de perfil?")) return
+    setUploadingAvatar(true)
+    const result = await actualizarAvatarUrl(id, null)
+    if (result.error) alert("Error: " + result.error)
+    else await loadData()
+    setUploadingAvatar(false)
+  }
+
   async function loadData() {
     const [data, gs] = await Promise.all([
       getAlumnoConLegajo(id),
@@ -516,6 +525,17 @@ export default function LegajoPage() {
                 : <Camera className="h-4 w-4" />}
               {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
             </button>
+
+            {profile.avatar_url && (
+              <button
+                onClick={handleRemoveAvatar}
+                disabled={uploadingAvatar}
+                className="w-full flex items-center justify-center gap-2 rounded-full border border-red-200 text-red-600 font-semibold py-2.5 hover:bg-red-50 transition-colors disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar foto
+              </button>
+            )}
 
             {avatarSaved && (
               <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">

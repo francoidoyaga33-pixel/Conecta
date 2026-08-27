@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { TopBar } from "../_components/TopBar"
 import { createClient } from "@/lib/supabase/client"
-import { Loader2, Camera, User, Mail, Shield, CheckCircle, X } from "lucide-react"
+import { Loader2, Camera, User, Mail, Shield, CheckCircle, X, Trash2 } from "lucide-react"
 
 const ROLE_LABELS: Record<string, string> = {
   admin:       "Administrador",
@@ -81,6 +81,22 @@ export default function PerfilPage() {
     setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+    setUploading(false)
+  }
+
+  async function handleRemoveAvatar() {
+    if (!profile) return
+    if (!confirm("¿Eliminar la foto de perfil?")) return
+
+    setUploading(true)
+    const supabase = createClient()
+
+    await supabase
+      .from("conecta_profiles")
+      .update({ avatar_url: null })
+      .eq("id", profile.id)
+
+    setProfile(prev => prev ? { ...prev, avatar_url: null } : prev)
     setUploading(false)
   }
 
@@ -222,6 +238,17 @@ export default function PerfilPage() {
                 : <Camera className="h-4 w-4" />}
               {uploading ? "Subiendo..." : "Cambiar foto"}
             </button>
+
+            {profile.avatar_url && (
+              <button
+                onClick={handleRemoveAvatar}
+                disabled={uploading}
+                className="w-full flex items-center justify-center gap-2 rounded-full border border-red-200 text-red-600 font-semibold py-2.5 hover:bg-red-50 transition-colors disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar foto
+              </button>
+            )}
 
             {saved && (
               <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
