@@ -73,12 +73,14 @@ export default function PerfilPage() {
       .from("avatars")
       .getPublicUrl(path)
 
+    const avatarUrl = `${publicUrl}?v=${Date.now()}`
+
     await supabase
       .from("conecta_profiles")
-      .update({ avatar_url: publicUrl })
+      .update({ avatar_url: avatarUrl })
       .eq("id", profile.id)
 
-    setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev)
+    setProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : prev)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
     setUploading(false)

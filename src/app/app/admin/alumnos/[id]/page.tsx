@@ -130,7 +130,7 @@ export default function LegajoPage() {
       return
     }
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path)
-    const result = await actualizarAvatarUrl(id, publicUrl)
+    const result = await actualizarAvatarUrl(id, `${publicUrl}?v=${Date.now()}`)
     if (result.error) {
       alert("Error: " + result.error)
     } else {
