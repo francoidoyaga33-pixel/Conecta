@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useTransition, useRef } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { TopBar } from "../../../_components/TopBar"
@@ -105,6 +105,9 @@ export default function LegajoPage() {
   const [saved, setSaved] = useState(false)
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarSaved, setAvatarSaved] = useState(false)
+  const [showPhotoModal, setShowPhotoModal] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   // Modal matrícula
   const [showMatModal, setShowMatModal] = useState(false)
@@ -128,8 +131,13 @@ export default function LegajoPage() {
     }
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path)
     const result = await actualizarAvatarUrl(id, publicUrl)
-    if (result.error) alert("Error: " + result.error)
-    else await loadData()
+    if (result.error) {
+      alert("Error: " + result.error)
+    } else {
+      await loadData()
+      setAvatarSaved(true)
+      setTimeout(() => setAvatarSaved(false), 2500)
+    }
     setUploadingAvatar(false)
     e.target.value = ""
   }
@@ -266,14 +274,12 @@ export default function LegajoPage() {
 
         {/* Header alumno */}
         <div className="bg-white rounded-xl border border-gray-100 p-5 flex items-center gap-4">
-          <label className="relative h-14 w-14 rounded-full shrink-0 cursor-pointer group">
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-              disabled={uploadingAvatar}
-            />
+          <button
+            type="button"
+            onClick={() => setShowPhotoModal(true)}
+            disabled={uploadingAvatar}
+            className="relative h-14 w-14 rounded-full shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B7A9E] focus-visible:ring-offset-2"
+          >
             <div className="h-14 w-14 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-xl font-black text-[#2B7A9E] overflow-hidden">
               {uploadingAvatar
                 ? <Loader2 className="h-5 w-5 animate-spin text-[#2B7A9E]" />
@@ -286,7 +292,15 @@ export default function LegajoPage() {
                 <Camera className="h-5 w-5 text-white" />
               </div>
             )}
-          </label>
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+            disabled={uploadingAvatar}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-lg font-black text-[#3D3D3D]">{profile.apellido}, {profile.nombre}</p>
             <p className="text-sm text-[#aaa]">
@@ -458,6 +472,60 @@ export default function LegajoPage() {
           )}
         </div>
       </main>
+
+      {/* Modal foto de perfil */}
+      {showPhotoModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          onClick={() => setShowPhotoModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 flex flex-col items-center gap-5 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex justify-end">
+              <button
+                onClick={() => setShowPhotoModal(false)}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-[#aaa] hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.nombre}
+                className="h-64 w-64 rounded-full object-cover border-4 border-gray-100"
+              />
+            ) : (
+              <div className="h-64 w-64 rounded-full bg-[#2B7A9E]/10 flex items-center justify-center text-6xl font-black text-[#2B7A9E]">
+                {initials}
+              </div>
+            )}
+
+            <p className="text-lg font-black text-[#3D3D3D] -mt-1">{profile.apellido}, {profile.nombre}</p>
+
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="w-full flex items-center justify-center gap-2 rounded-full bg-[#2B7A9E] text-white font-semibold py-2.5 hover:bg-[#246a8a] transition-colors disabled:opacity-60"
+            >
+              {uploadingAvatar
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Camera className="h-4 w-4" />}
+              {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
+            </button>
+
+            {avatarSaved && (
+              <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                Foto actualizada
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal matrícula */}
       {showMatModal && (
