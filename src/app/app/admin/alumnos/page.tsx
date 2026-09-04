@@ -56,15 +56,9 @@ export default function AlumnosPage() {
     })
   }, [])
 
-  // Enriquecer alumno con su estado de matrícula actual
-  function getEstadoAlumno(alumnoId: string) {
-    const m = matriculas.find(m => m.alumno_id === alumnoId)
-    return m?.estado ?? null
-  }
-
-  function getGrupoAlumno(alumnoId: string) {
-    const m = matriculas.find(m => m.alumno_id === alumnoId)
-    return m ? labelGrupo(m.conecta_grupos) : null
+  // Un alumno puede tener varias matrículas (una por curso)
+  function getMatriculasAlumno(alumnoId: string) {
+    return matriculas.filter(m => m.alumno_id === alumnoId)
   }
 
   const cursosUnicos = Array.from(
@@ -74,16 +68,15 @@ export default function AlumnosPage() {
   const filtered = alumnos.filter(a => {
     const matchSearch = `${a.nombre} ${a.apellido} ${a.email}`
       .toLowerCase().includes(search.toLowerCase())
-    const estado = getEstadoAlumno(a.id)
-    const grupo = getGrupoAlumno(a.id)
+    const misMatriculas = getMatriculasAlumno(a.id)
     const matchEstado =
       filtroEstado === "todos" ? true :
-      filtroEstado === "sin_matricula" ? !estado :
-      estado === filtroEstado
+      filtroEstado === "sin_matricula" ? misMatriculas.length === 0 :
+      misMatriculas.some(m => m.estado === filtroEstado)
     const matchCurso =
       filtroCurso === "todos" ? true :
-      filtroCurso === "sin_curso" ? !grupo :
-      grupo === filtroCurso
+      filtroCurso === "sin_curso" ? misMatriculas.every(m => !labelGrupo(m.conecta_grupos)) :
+      misMatriculas.some(m => labelGrupo(m.conecta_grupos) === filtroCurso)
     return matchSearch && matchEstado && matchCurso
   })
 
@@ -91,7 +84,7 @@ export default function AlumnosPage() {
     total: alumnos.length,
     habilitados: matriculas.filter(m => m.estado === "habilitado").length,
     suspensos: matriculas.filter(m => m.estado === "suspenso").length,
-    sinMatricula: alumnos.filter(a => !matriculas.find(m => m.alumno_id === a.id)).length,
+    sinMatricula: alumnos.filter(a => !matriculas.some(m => m.alumno_id === a.id)).length,
   }
 
   return (
@@ -166,17 +159,14 @@ export default function AlumnosPage() {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Alumno</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider hidden md:table-cell">Curso actual</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Estado</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider">Cursos</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-[#888] uppercase tracking-wider hidden md:table-cell">Alta</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(alumno => {
-                  const estado = getEstadoAlumno(alumno.id)
-                  const grupo = getGrupoAlumno(alumno.id)
-                  const estadoCfg = estado ? ESTADO_CONFIG[estado] : null
+                  const misMatriculas = getMatriculasAlumno(alumno.id)
 
                   return (
                     <tr key={alumno.id} className="hover:bg-gray-50/50 transition-colors">
@@ -196,17 +186,24 @@ export default function AlumnosPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-[#555] hidden md:table-cell">
-                        {grupo ?? <span className="text-[#ccc]">—</span>}
-                      </td>
                       <td className="px-4 py-3">
-                        {estadoCfg ? (
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${estadoCfg.bg} ${estadoCfg.color}`}>
-                            <estadoCfg.icon className="h-3 w-3" />
-                            {estadoCfg.label}
-                          </span>
-                        ) : (
+                        {misMatriculas.length === 0 ? (
                           <span className="text-xs text-[#ccc]">Sin matrícula</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {misMatriculas.map((m, i) => {
+                              const cfg = ESTADO_CONFIG[m.estado] ?? ESTADO_CONFIG.inactivo
+                              return (
+                                <span
+                                  key={i}
+                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${cfg.bg} ${cfg.color}`}
+                                >
+                                  <cfg.icon className="h-3 w-3" />
+                                  {labelGrupo(m.conecta_grupos) ?? "Sin grupo"}
+                                </span>
+                              )
+                            })}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-[#aaa] hidden md:table-cell">
