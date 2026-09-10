@@ -57,7 +57,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Académico",
     href: "/app/academico",
     icon: BookOpen,
-    roles: ["admin", "docente"],
+    roles: ["admin", "docente", "estudiante"],
   },
   {
     label: "Asistencia",

@@ -23,6 +23,29 @@ export async function getGrupos() {
   if (!profile) return []
 
   const admin = createAdminClient()
+
+  if (profile.role === "estudiante") {
+    const { data: matriculas } = await admin
+      .from("conecta_matriculas")
+      .select("grupo_id")
+      .eq("alumno_id", profile.id)
+      .eq("ciclo_lectivo", cicloActual)
+
+    const grupoIds = Array.from(new Set((matriculas ?? []).map(m => m.grupo_id).filter(Boolean)))
+    if (grupoIds.length === 0) return []
+
+    const { data: grupos } = await admin
+      .from("conecta_grupos")
+      .select("id, nombre, materia, nivel, docente_id")
+      .in("id", grupoIds)
+      .order("materia")
+      .order("nombre")
+
+    return (grupos ?? []).map(g => ({ ...g, docenteNombre: null }))
+  }
+
+  if (profile.role !== "admin" && profile.role !== "docente") return []
+
   let query = admin
     .from("conecta_grupos")
     .select("id, nombre, materia, nivel, docente_id")
@@ -89,6 +112,8 @@ export async function crearItem(payload: {
   titulo: string
   descripcion: string
   fechaEstimada: string | null
+  guiaDocente: string
+  guiaEstudiante: string
 }) {
   const check = await puedeEditarGrupo(payload.grupoId)
   if (!check.ok) return { error: check.error }
@@ -115,6 +140,8 @@ export async function crearItem(payload: {
     titulo: payload.titulo,
     descripcion: payload.descripcion || null,
     fecha_estimada: payload.fechaEstimada || null,
+    guia_docente: payload.guiaDocente || null,
+    guia_estudiante: payload.guiaEstudiante || null,
   })
   if (error) return { error: error.message }
 
@@ -128,6 +155,8 @@ export async function actualizarItem(id: string, grupoId: string, payload: {
   descripcion: string
   fechaEstimada: string | null
   estado: string
+  guiaDocente: string
+  guiaEstudiante: string
 }) {
   const check = await puedeEditarGrupo(grupoId)
   if (!check.ok) return { error: check.error }
@@ -141,6 +170,8 @@ export async function actualizarItem(id: string, grupoId: string, payload: {
       descripcion: payload.descripcion || null,
       fecha_estimada: payload.fechaEstimada || null,
       estado: payload.estado,
+      guia_docente: payload.guiaDocente || null,
+      guia_estudiante: payload.guiaEstudiante || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -157,34 +188,6 @@ export async function eliminarItem(id: string, grupoId: string) {
   const admin = createAdminClient()
   const { error } = await admin.from("conecta_planificaciones").delete().eq("id", id)
   if (error) return { error: error.message }
-
-  revalidatePath("/app/academico")
-  return { error: null }
-}
-
-export async function reordenarItem(id: string, grupoId: string, direccion: "arriba" | "abajo") {
-  const check = await puedeEditarGrupo(grupoId)
-  if (!check.ok) return { error: check.error }
-
-  const admin = createAdminClient()
-  const { data: items } = await admin
-    .from("conecta_planificaciones")
-    .select("id, orden")
-    .eq("grupo_id", grupoId)
-    .eq("ciclo_lectivo", cicloActual)
-    .order("orden")
-
-  if (!items) return { error: null }
-  const idx = items.findIndex(i => i.id === id)
-  if (idx === -1) return { error: null }
-  const swapIdx = direccion === "arriba" ? idx - 1 : idx + 1
-  if (swapIdx < 0 || swapIdx >= items.length) return { error: null }
-
-  const a = items[idx]
-  const b = items[swapIdx]
-
-  await admin.from("conecta_planificaciones").update({ orden: b.orden }).eq("id", a.id)
-  await admin.from("conecta_planificaciones").update({ orden: a.orden }).eq("id", b.id)
 
   revalidatePath("/app/academico")
   return { error: null }
