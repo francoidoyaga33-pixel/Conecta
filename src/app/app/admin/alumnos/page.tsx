@@ -17,6 +17,8 @@ interface Alumno {
   activo: boolean
   created_at: string
   avatar_url: string | null
+  nombre_padre: string | null
+  nombre_madre: string | null
 }
 
 interface Matricula {
@@ -66,7 +68,7 @@ export default function AlumnosPage() {
   ).sort() as string[]
 
   const filtered = alumnos.filter(a => {
-    const matchSearch = `${a.nombre} ${a.apellido} ${a.email}`
+    const matchSearch = `${a.nombre} ${a.apellido} ${a.email} ${a.nombre_padre ?? ""} ${a.nombre_madre ?? ""}`
       .toLowerCase().includes(search.toLowerCase())
     const misMatriculas = getMatriculasAlumno(a.id)
     const matchEstado =
@@ -114,7 +116,7 @@ export default function AlumnosPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar alumno..."
+              placeholder="Buscar alumno, padre o madre..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-[#3D3D3D] focus:outline-none focus:ring-2 focus:ring-[#2B7A9E]/20 focus:border-[#2B7A9E]"

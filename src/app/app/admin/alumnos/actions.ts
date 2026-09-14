@@ -18,12 +18,27 @@ export async function getMyProfile() {
 
 export async function getAlumnos() {
   const admin = createAdminClient()
-  const { data } = await admin
+  const { data: alumnos } = await admin
     .from("conecta_profiles")
     .select("id, nombre, apellido, email, activo, created_at, avatar_url")
     .eq("role", "estudiante")
     .order("apellido")
-  return data ?? []
+
+  if (!alumnos || alumnos.length === 0) return []
+
+  const { data: legajos } = await admin
+    .from("conecta_legajos")
+    .select("id, nombre_padre, nombre_madre")
+    .in("id", alumnos.map(a => a.id))
+
+  return alumnos.map(a => {
+    const legajo = legajos?.find(l => l.id === a.id)
+    return {
+      ...a,
+      nombre_padre: legajo?.nombre_padre ?? null,
+      nombre_madre: legajo?.nombre_madre ?? null,
+    }
+  })
 }
 
 export async function getAlumnoConLegajo(alumnoId: string) {
