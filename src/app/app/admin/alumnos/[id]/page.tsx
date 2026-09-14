@@ -27,7 +27,7 @@ interface Legajo {
 interface Matricula {
   id: string; estado: string; ciclo_lectivo: number
   fecha_inicio: string | null; fecha_fin: string | null; observaciones: string | null
-  conecta_grupos: { id: string; nombre: string; nivel: string } | null
+  conecta_grupos: { id: string; nombre: string; materia: string | null; nivel: string } | null
 }
 interface Grupo { id: string; nombre: string; materia: string | null; nivel: string | null }
 
@@ -357,6 +357,7 @@ export default function LegajoPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[#3D3D3D]">
                         {m.conecta_grupos?.nombre ?? "Grupo eliminado"}
+                        {m.conecta_grupos?.materia ? <span className="text-[#aaa] font-normal"> · {m.conecta_grupos.materia}</span> : null}
                         {m.conecta_grupos?.nivel ? <span className="text-[#aaa] font-normal"> · {m.conecta_grupos.nivel}</span> : null}
                       </p>
                       <p className="text-xs text-[#bbb]">Ciclo {m.ciclo_lectivo}{m.fecha_inicio ? ` · Desde ${new Date(m.fecha_inicio + "T12:00:00").toLocaleDateString("es-AR")}` : ""}</p>

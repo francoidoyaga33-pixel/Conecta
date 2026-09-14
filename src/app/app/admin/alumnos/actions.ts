@@ -57,7 +57,7 @@ export async function getAlumnoConLegajo(alumnoId: string) {
       .maybeSingle(),
     admin
       .from("conecta_matriculas")
-      .select("id, estado, ciclo_lectivo, fecha_inicio, fecha_fin, observaciones, conecta_grupos(id, nombre, nivel)")
+      .select("id, estado, ciclo_lectivo, fecha_inicio, fecha_fin, observaciones, conecta_grupos(id, nombre, materia, nivel)")
       .eq("alumno_id", alumnoId)
       .order("ciclo_lectivo", { ascending: false }),
   ])
