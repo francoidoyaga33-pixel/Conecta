@@ -19,8 +19,8 @@ interface Profile { id: string; nombre: string; apellido: string; email: string;
 interface Legajo {
   fecha_nacimiento: string | null; dni: string | null; cuil: string | null
   direccion: string | null; localidad: string | null; telefono: string | null
-  nombre_padre: string | null; telefono_padre: string | null; email_padre: string | null
-  nombre_madre: string | null; telefono_madre: string | null; email_madre: string | null
+  nombre_padre: string | null; telefono_padre: string | null; email_padre: string | null; ocupacion_padre: string | null
+  nombre_madre: string | null; telefono_madre: string | null; email_madre: string | null; ocupacion_madre: string | null
   enfermedades: string | null; medicacion: string | null
   autorizados: string | null; observaciones: string | null
 }
@@ -46,8 +46,8 @@ const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 const EMPTY_LEGAJO: Legajo = {
   fecha_nacimiento: "", dni: "", cuil: "", direccion: "", localidad: "", telefono: "",
-  nombre_padre: "", telefono_padre: "", email_padre: "",
-  nombre_madre: "", telefono_madre: "", email_madre: "",
+  nombre_padre: "", telefono_padre: "", email_padre: "", ocupacion_padre: "",
+  nombre_madre: "", telefono_madre: "", email_madre: "", ocupacion_madre: "",
   enfermedades: "", medicacion: "", autorizados: "", observaciones: "",
 }
 
@@ -180,9 +180,11 @@ export default function LegajoPage() {
       nombre_padre: legajo?.nombre_padre ?? "",
       telefono_padre: legajo?.telefono_padre ?? "",
       email_padre: legajo?.email_padre ?? "",
+      ocupacion_padre: legajo?.ocupacion_padre ?? "",
       nombre_madre: legajo?.nombre_madre ?? "",
       telefono_madre: legajo?.telefono_madre ?? "",
       email_madre: legajo?.email_madre ?? "",
+      ocupacion_madre: legajo?.ocupacion_madre ?? "",
       enfermedades: legajo?.enfermedades ?? "",
       medicacion: legajo?.medicacion ?? "",
       autorizados: legajo?.autorizados ?? "",
@@ -203,9 +205,11 @@ export default function LegajoPage() {
         nombre_padre: form.nombre_padre ?? "",
         telefono_padre: form.telefono_padre ?? "",
         email_padre: form.email_padre ?? "",
+        ocupacion_padre: form.ocupacion_padre ?? "",
         nombre_madre: form.nombre_madre ?? "",
         telefono_madre: form.telefono_madre ?? "",
         email_madre: form.email_madre ?? "",
+        ocupacion_madre: form.ocupacion_madre ?? "",
         enfermedades: form.enfermedades ?? "",
         medicacion: form.medicacion ?? "",
         autorizados: form.autorizados ?? "",
@@ -407,9 +411,11 @@ export default function LegajoPage() {
                   <Input label="Nombre del padre" name="nombre_padre" value={form.nombre_padre ?? ""} onChange={handleChange} />
                   <Input label="Teléfono del padre" name="telefono_padre" value={form.telefono_padre ?? ""} onChange={handleChange} />
                   <Input label="CUIL del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} />
+                  <Input label="Ocupación del padre" name="ocupacion_padre" value={form.ocupacion_padre ?? ""} onChange={handleChange} />
                   <Input label="Nombre de la madre" name="nombre_madre" value={form.nombre_madre ?? ""} onChange={handleChange} />
                   <Input label="Teléfono de la madre" name="telefono_madre" value={form.telefono_madre ?? ""} onChange={handleChange} />
                   <Input label="CUIL de la madre" name="email_madre" value={form.email_madre ?? ""} onChange={handleChange} />
+                  <Input label="Ocupación de la madre" name="ocupacion_madre" value={form.ocupacion_madre ?? ""} onChange={handleChange} />
                 </div>
               </div>
 
@@ -460,9 +466,11 @@ export default function LegajoPage() {
                       <Field label="Padre" value={legajo.nombre_padre} />
                       <Field label="Tel. padre" value={legajo.telefono_padre} />
                       <Field label="CUIL padre" value={legajo.email_padre} />
+                      <Field label="Ocupación padre" value={legajo.ocupacion_padre} />
                       <Field label="Madre" value={legajo.nombre_madre} />
                       <Field label="Tel. madre" value={legajo.telefono_madre} />
                       <Field label="CUIL madre" value={legajo.email_madre} />
+                      <Field label="Ocupación madre" value={legajo.ocupacion_madre} />
                     </div>
                   </div>
 

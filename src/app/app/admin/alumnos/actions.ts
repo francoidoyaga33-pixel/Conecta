@@ -79,9 +79,11 @@ export async function guardarLegajo(alumnoId: string, data: {
   nombre_padre: string
   telefono_padre: string
   email_padre: string
+  ocupacion_padre: string
   nombre_madre: string
   telefono_madre: string
   email_madre: string
+  ocupacion_madre: string
   enfermedades: string
   medicacion: string
   autorizados: string
