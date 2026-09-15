@@ -408,7 +408,7 @@ export default function LegajoPage() {
 
               <div className="border-t border-gray-100 pt-5">
                 <p className="text-xs font-bold text-[#3D3D3D] mb-3 flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#2B7A9E]" /> Datos familiares</p>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <Input label="Nombre del padre" name="nombre_padre" value={form.nombre_padre ?? ""} onChange={handleChange} />
                   <Input label="Teléfono del padre" name="telefono_padre" value={form.telefono_padre ?? ""} onChange={handleChange} />
                   <Input label="CUIL del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} />
@@ -463,7 +463,7 @@ export default function LegajoPage() {
 
                   <div className="border-t border-gray-100 pt-4">
                     <p className="text-xs font-bold text-[#3D3D3D] mb-3 flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#2B7A9E]" /> Datos familiares</p>
-                    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+                    <div className="grid grid-cols-4 gap-x-6 gap-y-4">
                       <Field label="Padre" value={legajo.nombre_padre} />
                       <Field label="Tel. padre" value={legajo.telefono_padre} />
                       <Field label="CUIL padre" value={legajo.email_padre} />
