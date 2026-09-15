@@ -8,6 +8,7 @@ import {
   Users, Phone, Mail, BookOpen, MessageSquare,
 } from "lucide-react"
 import { getInteresados, crearInteresado, actualizarInteresado, eliminarInteresado } from "./actions"
+import { normalizeText } from "@/lib/normalize"
 
 interface Interesado {
   id: string; nombre: string; apellido: string; email: string; telefono: string
@@ -131,8 +132,8 @@ export default function InteresadosPage() {
   }
 
   const filtered = interesados.filter(i => {
-    const matchSearch = `${i.nombre} ${i.apellido} ${i.email} ${i.cursos_interes}`
-      .toLowerCase().includes(search.toLowerCase())
+    const matchSearch = normalizeText(`${i.nombre} ${i.apellido} ${i.email} ${i.cursos_interes}`)
+      .includes(normalizeText(search))
     const matchEstado = filtroEstado === "todos" || i.estado_venta === filtroEstado
     const matchCanal = filtroCanal === "todos" || i.canal === filtroCanal
     return matchSearch && matchEstado && matchCanal

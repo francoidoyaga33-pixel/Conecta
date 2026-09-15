@@ -8,6 +8,7 @@ import {
   Clock, TrendingUp, TrendingDown, Search,
 } from "lucide-react"
 import { getDocentes } from "./actions"
+import { normalizeText } from "@/lib/normalize"
 
 interface DocenteRow {
   id: string
@@ -36,7 +37,7 @@ export default function DocentesPage() {
   }, [])
 
   const filtered = docentes.filter(d =>
-    `${d.nombre} ${d.apellido} ${d.email}`.toLowerCase().includes(search.toLowerCase())
+    normalizeText(`${d.nombre} ${d.apellido} ${d.email}`).includes(normalizeText(search))
   )
 
   const totalHoras = docentes.reduce((s, d) => s + d.horasSemanales, 0)

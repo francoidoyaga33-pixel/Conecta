@@ -8,6 +8,7 @@ import {
   GraduationCap, Users, DollarSign, KeyRound, CreditCard, Mail, ClipboardList
 } from "lucide-react"
 import { getUsuarios, createUsuario, toggleUsuarioActivo, deleteUsuario, changePassword, getMyRole, getAuditLog } from "./actions"
+import { normalizeText } from "@/lib/normalize"
 
 type Role = "admin" | "docente" | "estudiante" | "tutor_padre" | "financiero"
 
@@ -64,8 +65,8 @@ export default function UsuariosPage() {
   useEffect(() => { loadUsers() }, [])
 
   const filtered = users.filter((u) => {
-    const matchSearch = `${u.nombre} ${u.apellido} ${u.email}`
-      .toLowerCase().includes(search.toLowerCase())
+    const matchSearch = normalizeText(`${u.nombre} ${u.apellido} ${u.email}`)
+      .includes(normalizeText(search))
     const matchRole = roleFilter === "todos" || u.role === roleFilter
     return matchSearch && matchRole
   })

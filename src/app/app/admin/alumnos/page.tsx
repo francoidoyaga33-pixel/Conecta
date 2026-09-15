@@ -8,6 +8,7 @@ import {
   UserCheck, UserX, AlertCircle, FileText
 } from "lucide-react"
 import { getAlumnos, getMatriculasConEstado } from "./actions"
+import { normalizeText } from "@/lib/normalize"
 
 interface Alumno {
   id: string
@@ -68,8 +69,8 @@ export default function AlumnosPage() {
   ).sort() as string[]
 
   const filtered = alumnos.filter(a => {
-    const matchSearch = `${a.nombre} ${a.apellido} ${a.email} ${a.nombre_padre ?? ""} ${a.nombre_madre ?? ""}`
-      .toLowerCase().includes(search.toLowerCase())
+    const matchSearch = normalizeText(`${a.nombre} ${a.apellido} ${a.email} ${a.nombre_padre ?? ""} ${a.nombre_madre ?? ""}`)
+      .includes(normalizeText(search))
     const misMatriculas = getMatriculasAlumno(a.id)
     const matchEstado =
       filtroEstado === "todos" ? true :

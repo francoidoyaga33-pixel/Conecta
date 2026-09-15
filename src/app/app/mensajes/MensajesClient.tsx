@@ -8,6 +8,7 @@ import {
   getConversaciones, getMensajes, enviarMensaje,
   getOrCreateConversacion, getUsuariosDisponibles, marcarLeido,
 } from "./actions"
+import { normalizeText } from "@/lib/normalize"
 
 interface Profile {
   id: string
@@ -147,15 +148,14 @@ export function MensajesClient({ currentUser }: { currentUser: Profile }) {
   }
 
   const filteredConvs = conversaciones.filter((c) => {
-    const nombre = c.otrosParticipantes
+    const nombre = normalizeText(c.otrosParticipantes
       .map((p) => `${p.nombre} ${p.apellido}`)
-      .join(" ")
-      .toLowerCase()
-    return nombre.includes(search.toLowerCase())
+      .join(" "))
+    return nombre.includes(normalizeText(search))
   })
 
   const filteredUsuarios = usuarios.filter((u) =>
-    `${u.nombre} ${u.apellido}`.toLowerCase().includes(searchUsuario.toLowerCase())
+    normalizeText(`${u.nombre} ${u.apellido}`).includes(normalizeText(searchUsuario))
   )
 
   return (
