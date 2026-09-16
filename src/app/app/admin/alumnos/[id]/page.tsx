@@ -21,6 +21,9 @@ interface Legajo {
   direccion: string | null; localidad: string | null; telefono: string | null
   nombre_padre: string | null; telefono_padre: string | null; email_padre: string | null; ocupacion_padre: string | null
   nombre_madre: string | null; telefono_madre: string | null; email_madre: string | null; ocupacion_madre: string | null
+  tiene_tutor: boolean | null
+  nombre_tutor: string | null; telefono_tutor: string | null; email_tutor: string | null
+  ocupacion_tutor: string | null; parentesco_tutor: string | null
   enfermedades: string | null; medicacion: string | null
   autorizados: string | null; observaciones: string | null
 }
@@ -48,6 +51,8 @@ const EMPTY_LEGAJO: Legajo = {
   fecha_nacimiento: "", dni: "", cuil: "", direccion: "", localidad: "", telefono: "",
   nombre_padre: "", telefono_padre: "", email_padre: "", ocupacion_padre: "",
   nombre_madre: "", telefono_madre: "", email_madre: "", ocupacion_madre: "",
+  tiene_tutor: false,
+  nombre_tutor: "", telefono_tutor: "", email_tutor: "", ocupacion_tutor: "", parentesco_tutor: "",
   enfermedades: "", medicacion: "", autorizados: "", observaciones: "",
 }
 
@@ -169,6 +174,10 @@ export default function LegajoPage() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
+  function handleToggleTutor(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm(prev => ({ ...prev, tiene_tutor: e.target.checked }))
+  }
+
   function startEdit() {
     setForm({
       fecha_nacimiento: legajo?.fecha_nacimiento ?? "",
@@ -185,6 +194,12 @@ export default function LegajoPage() {
       telefono_madre: legajo?.telefono_madre ?? "",
       email_madre: legajo?.email_madre ?? "",
       ocupacion_madre: legajo?.ocupacion_madre ?? "",
+      tiene_tutor: legajo?.tiene_tutor ?? false,
+      nombre_tutor: legajo?.nombre_tutor ?? "",
+      telefono_tutor: legajo?.telefono_tutor ?? "",
+      email_tutor: legajo?.email_tutor ?? "",
+      ocupacion_tutor: legajo?.ocupacion_tutor ?? "",
+      parentesco_tutor: legajo?.parentesco_tutor ?? "",
       enfermedades: legajo?.enfermedades ?? "",
       medicacion: legajo?.medicacion ?? "",
       autorizados: legajo?.autorizados ?? "",
@@ -210,6 +225,12 @@ export default function LegajoPage() {
         telefono_madre: form.telefono_madre ?? "",
         email_madre: form.email_madre ?? "",
         ocupacion_madre: form.ocupacion_madre ?? "",
+        tiene_tutor: form.tiene_tutor ?? false,
+        nombre_tutor: form.nombre_tutor ?? "",
+        telefono_tutor: form.telefono_tutor ?? "",
+        email_tutor: form.email_tutor ?? "",
+        ocupacion_tutor: form.ocupacion_tutor ?? "",
+        parentesco_tutor: form.parentesco_tutor ?? "",
         enfermedades: form.enfermedades ?? "",
         medicacion: form.medicacion ?? "",
         autorizados: form.autorizados ?? "",
@@ -407,17 +428,33 @@ export default function LegajoPage() {
               </div>
 
               <div className="border-t border-gray-100 pt-5">
-                <p className="text-xs font-bold text-[#3D3D3D] mb-3 flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#2B7A9E]" /> Datos familiares</p>
-                <div className="grid grid-cols-4 gap-4">
-                  <Input label="Nombre del padre" name="nombre_padre" value={form.nombre_padre ?? ""} onChange={handleChange} />
-                  <Input label="Teléfono del padre" name="telefono_padre" value={form.telefono_padre ?? ""} onChange={handleChange} />
-                  <Input label="CUIL del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} />
-                  <Input label="Ocupación del padre" name="ocupacion_padre" value={form.ocupacion_padre ?? ""} onChange={handleChange} />
-                  <Input label="Nombre de la madre" name="nombre_madre" value={form.nombre_madre ?? ""} onChange={handleChange} />
-                  <Input label="Teléfono de la madre" name="telefono_madre" value={form.telefono_madre ?? ""} onChange={handleChange} />
-                  <Input label="CUIL de la madre" name="email_madre" value={form.email_madre ?? ""} onChange={handleChange} />
-                  <Input label="Ocupación de la madre" name="ocupacion_madre" value={form.ocupacion_madre ?? ""} onChange={handleChange} />
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-[#3D3D3D] flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#2B7A9E]" /> Datos familiares</p>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[#555] cursor-pointer">
+                    <input type="checkbox" checked={form.tiene_tutor ?? false} onChange={handleToggleTutor} className="h-4 w-4 rounded border-gray-300 text-[#2B7A9E] focus:ring-[#2B7A9E]/20" />
+                    Cuenta con tutor
+                  </label>
                 </div>
+                {form.tiene_tutor ? (
+                  <div className="grid grid-cols-5 gap-4">
+                    <Input label="Nombre del tutor" name="nombre_tutor" value={form.nombre_tutor ?? ""} onChange={handleChange} />
+                    <Input label="Teléfono del tutor" name="telefono_tutor" value={form.telefono_tutor ?? ""} onChange={handleChange} />
+                    <Input label="CUIL del tutor" name="email_tutor" value={form.email_tutor ?? ""} onChange={handleChange} />
+                    <Input label="Ocupación del tutor" name="ocupacion_tutor" value={form.ocupacion_tutor ?? ""} onChange={handleChange} />
+                    <Input label="Parentesco" name="parentesco_tutor" value={form.parentesco_tutor ?? ""} onChange={handleChange} placeholder="Ej: Tío, abuela..." />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-4">
+                    <Input label="Nombre del padre" name="nombre_padre" value={form.nombre_padre ?? ""} onChange={handleChange} />
+                    <Input label="Teléfono del padre" name="telefono_padre" value={form.telefono_padre ?? ""} onChange={handleChange} />
+                    <Input label="CUIL del padre" name="email_padre" value={form.email_padre ?? ""} onChange={handleChange} />
+                    <Input label="Ocupación del padre" name="ocupacion_padre" value={form.ocupacion_padre ?? ""} onChange={handleChange} />
+                    <Input label="Nombre de la madre" name="nombre_madre" value={form.nombre_madre ?? ""} onChange={handleChange} />
+                    <Input label="Teléfono de la madre" name="telefono_madre" value={form.telefono_madre ?? ""} onChange={handleChange} />
+                    <Input label="CUIL de la madre" name="email_madre" value={form.email_madre ?? ""} onChange={handleChange} />
+                    <Input label="Ocupación de la madre" name="ocupacion_madre" value={form.ocupacion_madre ?? ""} onChange={handleChange} />
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-gray-100 pt-5">
@@ -463,16 +500,26 @@ export default function LegajoPage() {
 
                   <div className="border-t border-gray-100 pt-4">
                     <p className="text-xs font-bold text-[#3D3D3D] mb-3 flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#2B7A9E]" /> Datos familiares</p>
-                    <div className="grid grid-cols-4 gap-x-6 gap-y-4">
-                      <Field label="Padre" value={legajo.nombre_padre} />
-                      <Field label="Tel. padre" value={legajo.telefono_padre} />
-                      <Field label="CUIL padre" value={legajo.email_padre} />
-                      <Field label="Ocupación padre" value={legajo.ocupacion_padre} />
-                      <Field label="Madre" value={legajo.nombre_madre} />
-                      <Field label="Tel. madre" value={legajo.telefono_madre} />
-                      <Field label="CUIL madre" value={legajo.email_madre} />
-                      <Field label="Ocupación madre" value={legajo.ocupacion_madre} />
-                    </div>
+                    {legajo.tiene_tutor ? (
+                      <div className="grid grid-cols-5 gap-x-6 gap-y-4">
+                        <Field label="Tutor" value={legajo.nombre_tutor} />
+                        <Field label="Tel. tutor" value={legajo.telefono_tutor} />
+                        <Field label="CUIL tutor" value={legajo.email_tutor} />
+                        <Field label="Ocupación tutor" value={legajo.ocupacion_tutor} />
+                        <Field label="Parentesco" value={legajo.parentesco_tutor} />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-x-6 gap-y-4">
+                        <Field label="Padre" value={legajo.nombre_padre} />
+                        <Field label="Tel. padre" value={legajo.telefono_padre} />
+                        <Field label="CUIL padre" value={legajo.email_padre} />
+                        <Field label="Ocupación padre" value={legajo.ocupacion_padre} />
+                        <Field label="Madre" value={legajo.nombre_madre} />
+                        <Field label="Tel. madre" value={legajo.telefono_madre} />
+                        <Field label="CUIL madre" value={legajo.email_madre} />
+                        <Field label="Ocupación madre" value={legajo.ocupacion_madre} />
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t border-gray-100 pt-4">

@@ -28,7 +28,7 @@ export async function getAlumnos() {
 
   const { data: legajos } = await admin
     .from("conecta_legajos")
-    .select("id, nombre_padre, nombre_madre")
+    .select("id, nombre_padre, nombre_madre, nombre_tutor")
     .in("id", alumnos.map(a => a.id))
 
   return alumnos.map(a => {
@@ -37,6 +37,7 @@ export async function getAlumnos() {
       ...a,
       nombre_padre: legajo?.nombre_padre ?? null,
       nombre_madre: legajo?.nombre_madre ?? null,
+      nombre_tutor: legajo?.nombre_tutor ?? null,
     }
   })
 }
@@ -84,6 +85,12 @@ export async function guardarLegajo(alumnoId: string, data: {
   telefono_madre: string
   email_madre: string
   ocupacion_madre: string
+  tiene_tutor: boolean
+  nombre_tutor: string
+  telefono_tutor: string
+  email_tutor: string
+  ocupacion_tutor: string
+  parentesco_tutor: string
   enfermedades: string
   medicacion: string
   autorizados: string

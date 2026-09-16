@@ -20,6 +20,7 @@ interface Alumno {
   avatar_url: string | null
   nombre_padre: string | null
   nombre_madre: string | null
+  nombre_tutor: string | null
 }
 
 interface Matricula {
@@ -69,7 +70,7 @@ export default function AlumnosPage() {
   ).sort() as string[]
 
   const filtered = alumnos.filter(a => {
-    const matchSearch = normalizeText(`${a.nombre} ${a.apellido} ${a.email} ${a.nombre_padre ?? ""} ${a.nombre_madre ?? ""}`)
+    const matchSearch = normalizeText(`${a.nombre} ${a.apellido} ${a.email} ${a.nombre_padre ?? ""} ${a.nombre_madre ?? ""} ${a.nombre_tutor ?? ""}`)
       .includes(normalizeText(search))
     const misMatriculas = getMatriculasAlumno(a.id)
     const matchEstado =
