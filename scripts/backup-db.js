@@ -33,6 +33,7 @@ const TABLES = [
   "conecta_conversacion_participantes",
   "conecta_grupos",
   "conecta_planificaciones",
+  "conecta_seguimientos",
   "conecta_horarios",
   "conecta_eventos",
   "conecta_interesados",

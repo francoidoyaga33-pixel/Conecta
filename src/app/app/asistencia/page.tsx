@@ -4,13 +4,15 @@ import { useState, useEffect, useTransition } from "react"
 import { TopBar } from "../_components/TopBar"
 import {
   ClipboardList, ChevronDown, Calendar, CheckCircle2,
-  XCircle, Clock, FileCheck, Loader2, Save, BarChart2, ArrowLeft
+  XCircle, Clock, FileCheck, Loader2, Save, BarChart2, ArrowLeft, AlertTriangle
 } from "lucide-react"
 import {
   getGrupos, getEstudiantesDeGrupo, getAsistenciaDelDia,
   guardarAsistencia, getReporteMensual, getMyProfile,
   getDocentes, getAsistenciaDocentesDelDia, guardarAsistenciaDocentes, getReporteMensualDocentes,
+  getSeguimientos, type AlertaSeguimiento, type SeguimientoCerrado,
 } from "./actions"
+import { SeguimientoPanel } from "./SeguimientoPanel"
 
 type EstadoAsistencia = "presente" | "ausente" | "tardanza" | "justificado"
 
@@ -45,7 +47,7 @@ const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto"
 
 export default function AsistenciaPage() {
   const [modo, setModo] = useState<"alumnos" | "docentes">("alumnos")
-  const [vista, setVista] = useState<"registro" | "reporte">("registro")
+  const [vista, setVista] = useState<"registro" | "reporte" | "seguimiento">("registro")
   const [grupos, setGrupos] = useState<Grupo[]>([])
   const [grupoId, setGrupoId] = useState("")
   const [fecha, setFecha] = useState(todayISO())
@@ -56,6 +58,18 @@ export default function AsistenciaPage() {
   const [isPending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
   const [myRole, setMyRole] = useState("")
+
+  // Seguimiento de faltas
+  const [alertas, setAlertas] = useState<AlertaSeguimiento[]>([])
+  const [cerrados, setCerrados] = useState<SeguimientoCerrado[]>([])
+  const [loadingSeg, setLoadingSeg] = useState(true)
+
+  async function cargarSeguimientos() {
+    const data = await getSeguimientos()
+    setAlertas(data.alertas)
+    setCerrados(data.cerrados)
+    setLoadingSeg(false)
+  }
 
   // Reporte alumnos
   const now = new Date()
@@ -84,6 +98,7 @@ export default function AsistenciaPage() {
       setLoading(false)
     }
     init()
+    cargarSeguimientos()
   }, [])
 
   useEffect(() => {
@@ -184,6 +199,7 @@ export default function AsistenciaPage() {
       }))
       const result = await guardarAsistencia(grupoId, fecha, rows)
       if (result.error) { alert("Error: " + result.error); return }
+      cargarSeguimientos()
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     })
@@ -484,6 +500,7 @@ export default function AsistenciaPage() {
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             {/* Selector grupo */}
+            {vista !== "seguimiento" && (
             <div className="relative">
               <select
                 value={grupoId}
@@ -497,6 +514,7 @@ export default function AsistenciaPage() {
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
             </div>
+            )}
 
             {/* Selector fecha (solo en registro) */}
             {vista === "registro" && (
@@ -548,6 +566,20 @@ export default function AsistenciaPage() {
             >
               <BarChart2 className="h-3.5 w-3.5" />
               Reporte
+            </button>
+            <button
+              onClick={() => setVista("seguimiento")}
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors ${
+                vista === "seguimiento" ? "bg-[#2B7A9E] text-white" : "text-[#555] hover:bg-gray-50"
+              }`}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Seguimiento
+              {alertas.length > 0 && (
+                <span className="ml-0.5 min-w-[18px] rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-[18px] text-white text-center">
+                  {alertas.length}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -613,6 +645,15 @@ export default function AsistenciaPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-[#3D3D3D] truncate">{est.apellido}, {est.nombre}</p>
+                            {(() => {
+                              const alerta = alertas.find((a) => a.alumno_id === est.id && a.grupo_id === grupoId)
+                              if (!alerta) return null
+                              return (
+                                <button onClick={() => setVista("seguimiento")} className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 hover:underline">
+                                  <AlertTriangle className="h-3 w-3" /> {alerta.faltas.length} faltas · ver seguimiento
+                                </button>
+                              )
+                            })()}
                           </div>
                           <div className="flex gap-1.5">
                             {ESTADOS.map((e) => {
@@ -663,6 +704,17 @@ export default function AsistenciaPage() {
             )}
           </>
         )}
+
+          {/* ── VISTA SEGUIMIENTO ── */}
+          {vista === "seguimiento" && (
+            <SeguimientoPanel
+              alertas={alertas}
+              cerrados={cerrados}
+              loading={loadingSeg}
+              esAdmin={myRole === "admin"}
+              onChange={cargarSeguimientos}
+            />
+          )}
 
           {/* ── VISTA REPORTE ALUMNOS ── */}
           {vista === "reporte" && (
