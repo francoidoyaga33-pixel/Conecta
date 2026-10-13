@@ -4,7 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
-const cicloActual = new Date().getFullYear()
+function cicloActual() {
+  return new Date().getFullYear()
+}
 
 export async function getMyProfile() {
   const supabase = await createClient()
@@ -29,7 +31,7 @@ export async function getGrupos() {
       .from("conecta_matriculas")
       .select("grupo_id")
       .eq("alumno_id", profile.id)
-      .eq("ciclo_lectivo", cicloActual)
+      .eq("ciclo_lectivo", cicloActual())
 
     const grupoIds = Array.from(new Set((matriculas ?? []).map(m => m.grupo_id).filter(Boolean)))
     if (grupoIds.length === 0) return []
@@ -79,13 +81,43 @@ export async function getGrupos() {
 }
 
 export async function getPlanificaciones(grupoId: string) {
+  const profile = await getMyProfile()
+  if (!profile) return []
+
   const admin = createAdminClient()
+
+  if (profile.role === "docente") {
+    const { data: grupo } = await admin
+      .from("conecta_grupos")
+      .select("docente_id")
+      .eq("id", grupoId)
+      .single()
+    if (!grupo || grupo.docente_id !== profile.id) return []
+  } else if (profile.role === "estudiante") {
+    const { data: matricula } = await admin
+      .from("conecta_matriculas")
+      .select("id")
+      .eq("alumno_id", profile.id)
+      .eq("grupo_id", grupoId)
+      .eq("ciclo_lectivo", cicloActual())
+      .limit(1)
+      .maybeSingle()
+    if (!matricula) return []
+  } else if (profile.role !== "admin") {
+    return []
+  }
+
   const { data } = await admin
     .from("conecta_planificaciones")
     .select("*")
     .eq("grupo_id", grupoId)
-    .eq("ciclo_lectivo", cicloActual)
+    .eq("ciclo_lectivo", cicloActual())
     .order("orden")
+
+  // La guía docente no debe llegar al navegador del estudiante
+  if (profile.role === "estudiante") {
+    return (data ?? []).map(item => ({ ...item, guia_docente: null }))
+  }
   return data ?? []
 }
 
@@ -124,7 +156,7 @@ export async function crearItem(payload: {
     .from("conecta_planificaciones")
     .select("orden")
     .eq("grupo_id", payload.grupoId)
-    .eq("ciclo_lectivo", cicloActual)
+    .eq("ciclo_lectivo", cicloActual())
     .order("orden", { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -134,7 +166,7 @@ export async function crearItem(payload: {
   const { error } = await admin.from("conecta_planificaciones").insert({
     grupo_id: payload.grupoId,
     docente_id: check.profile.id,
-    ciclo_lectivo: cicloActual,
+    ciclo_lectivo: cicloActual(),
     orden,
     unidad: payload.unidad || null,
     titulo: payload.titulo,
@@ -175,6 +207,7 @@ export async function actualizarItem(id: string, grupoId: string, payload: {
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
+    .eq("grupo_id", grupoId)
   if (error) return { error: error.message }
 
   revalidatePath("/app/academico")
@@ -186,7 +219,7 @@ export async function eliminarItem(id: string, grupoId: string) {
   if (!check.ok) return { error: check.error }
 
   const admin = createAdminClient()
-  const { error } = await admin.from("conecta_planificaciones").delete().eq("id", id)
+  const { error } = await admin.from("conecta_planificaciones").delete().eq("id", id).eq("grupo_id", grupoId)
   if (error) return { error: error.message }
 
   revalidatePath("/app/academico")
